@@ -1,3 +1,21 @@
+class ProgramMemory:
+    def __init__(self, size=1024):
+        self.size = size
+        self.memory = [0] * size
+
+    def write(self, address, value):
+        if address < 0 or address >= self.size:
+            raise ValueError("Address out of range")
+        self.memory[address] = value
+
+    def read(self, address):
+        if address < 0 or address >= self.size:
+            raise ValueError("Address out of range")
+        return self.memory[address]
+
+    def reset(self):
+        self.memory = [0] * self.size
+
 
 
 class Stack:
