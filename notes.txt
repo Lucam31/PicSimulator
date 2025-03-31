@@ -1,0 +1,12 @@
+seperate command and variable info in the 14-bit code by using bit masks
+first 6 bits command last 8 bits vars
+11 1111 0000 0000 for command   (3F00)
+00 0000 1111 1111 for vars      (00FF)
+
+different masks depending on operations
+some only use the first 3 or 4 bits for the command
+
+
+programmspeicher eindimensionaler array
+
+datenspeicher hat 2 bänke
