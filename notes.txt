@@ -10,3 +10,7 @@ some only use the first 3 or 4 bits for the command
 programmspeicher eindimensionaler array
 
 datenspeicher hat 2 bänke
+
+yaml/json file für bit masken, kann mit name der funktion abgerufen werden
+
+bei stack overflow warnung ausgeben und möglichkeit geben zum weiterlaufen lassen
