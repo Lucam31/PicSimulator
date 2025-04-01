@@ -7,10 +7,18 @@ different masks depending on operations
 some only use the first 3 or 4 bits for the command
 
 
-programmspeicher eindimensionaler array
-
-datenspeicher hat 2 bänke
-
-yaml/json file für bit masken, kann mit name der funktion abgerufen werden
-
 bei stack overflow warnung ausgeben und möglichkeit geben zum weiterlaufen lassen
+
+
+
+
+alu erhält befehl mit adressen, holt sich werte der register aus speicherklasse, schreibt ergebnis an entsprechende adresse
+bei overflow carry flag setzen
+
+
+DataMemory Funktionen:
+- writeRegister(register)
+- readRegister(register)
+- getW()
+- setBit(register, bit, value)
+- getBit(register, bit)
