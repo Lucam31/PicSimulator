@@ -1,18 +1,23 @@
 # if memory is unknown on power-on reset, the value will be None
 
 
-class Memory:
+# register welche auf beiden bänken gleich sind, wo soll das spiegeln gehandelt werden?
+
+# bit in arrays drehen
+
+class DataMemory:
     def __init__(self):
         self.bank0 = [[0] * 8] * 128  
-        self.bank1 = [[0] * 8] * 128  
+        self.bank1 = [[0] * 8] * 128
+        self.WREG = [0] * 8  
         
         self.initBank0()
         self.initBank1()
 
-        self.memory = []
+        self.memory = [None] * 2
 
         self.memory[0] = self.bank0
-        self.memory[1] = self.bank1     
+        self.memory[1] = self.bank1             
 
     def initBank0(self):
         # initialize Bank 0
@@ -44,6 +49,8 @@ class Memory:
         self.bank0[0x0B] = [0, 0, 0, 0, 0, 0, 0, None]
 
     def initBank1(self):
+
+
         # OPTION_REG
         self.bank1[0x01] = [1] * 8
 
@@ -64,6 +71,44 @@ class Memory:
 
         # INTCON
         self.bank1[0x0B] = [0, 0, 0, 0, 0, 0, 0, None]
+
+    def getActiveBank(self):
+        return self.memory[0][0x03][5]  # STATUS register, bit 5 (RP0) indicates active bank
+
+    def getW(self):
+        return self.WREG
+    
+    def readRegister(self, register):
+        if register == 'w':
+            return self.WREG
+        elif register in range(0x00, 0x80):
+            return self.memory[self.getActiveBank()][register]
+        else:
+            raise ValueError("Invalid register address")
+
+    def writeRegister(self, register, value):
+        if register == 'w':
+            self.WREG = value
+        elif register in range(0x00, 0x80):
+            self.memory[self.getActiveBank()][register] = value
+        else:
+            raise ValueError("Invalid register address")
+        
+    def setBit(self, register, bit, value):
+        if register == 'w':
+            self.WREG[bit] = value
+        elif register in range(0x00, 0x80):
+            self.memory[self.getActiveBank()][register][bit] = value
+        else:
+            raise ValueError("Invalid register address")
+        
+    def getBit(self, register, bit):
+        if register == 'w':
+            return self.WREG[bit]
+        elif register in range(0x00, 0x80):
+            return self.memory[self.getActiveBank()][register][bit]
+        else:
+            raise ValueError("Invalid register address")
 
 class ProgramMemory:
     def __init__(self, size=1024):
@@ -110,3 +155,15 @@ class Stack:
     
     def is_empty(self):
         return len(self.stack) == 0
+
+
+mem = DataMemory()
+
+print(mem.memory[0])
+
+print(mem.memory[0][0x03])
+
+print(mem.getActiveBank())
+#mem.setBit(0x03, 5, 1)
+
+#print(mem.memory[0])
