@@ -9,6 +9,7 @@ class FileReader:
         try:
             with open(os.getcwd()+file_path, 'r') as file:
                 lines = file.readlines()
+            self.file = lines
             filtered_lines = []
             for line in lines:
                 filtered_lines.append(line[5:9])
