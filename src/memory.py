@@ -135,41 +135,6 @@ class DataMemory:
     def setPCL(self, value):
         self.writeRegister(0x02, value)
     
-    def readRegister(self, register):
-        if register == 'w':
-            return self.WREG
-        elif register in range(0x00, 0x80):
-            return self.memory[self.getActiveBank()][register]
-        else:
-            raise ValueError("Invalid register address")
-
-    def writeRegister(self, register, value):
-        if register == 'w':
-            self.WREG = value
-        elif register in range(0x00, 0x80):
-            if register in MIRRORED_REGISTERS:
-                self.memory[1 - self.getActiveBank()][register] = value
-            self.memory[self.getActiveBank()][register] = value
-        else:
-            raise ValueError("Invalid register address")
-        
-    def setBit(self, register, bit, value):
-        if register == 'w':
-            self.WREG[bit] = value
-        elif register in range(0x00, 0x80):
-            if register in MIRRORED_REGISTERS:
-                self.memory[1 - self.getActiveBank()][register][bit] = value
-            self.memory[self.getActiveBank()][register][bit] = value
-        else:
-            raise ValueError("Invalid register address")
-        
-    def getBit(self, register, bit):
-        if register == 'w':
-            return self.WREG[bit]
-        elif register in range(0x00, 0x80):
-            return self.memory[self.getActiveBank()][register][bit]
-        else:
-            raise ValueError("Invalid register address")
 
 class ProgramMemory:
     def __init__(self, size=1024):
