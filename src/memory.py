@@ -1,9 +1,12 @@
 # if memory is unknown on power-on reset, the value will be None
 
-
-# register welche auf beiden bänken gleich sind, wo soll das spiegeln gehandelt werden?
-
-# bit in arrays drehen
+MIRRORED_REGISTERS = {
+    0x02,     # PCL
+    0x03,  # STATUS
+    0x04,     # FSR
+    0x0A,  # PCLATH
+    0x0B   # INTCON
+}
 
 class DataMemory:
     def __init__(self):
@@ -17,7 +20,7 @@ class DataMemory:
         self.memory = [None] * 2
 
         self.memory[0] = self.bank0
-        self.memory[1] = self.bank1             
+        self.memory[1] = self.bank1
 
     def initBank0(self):
         # initialize Bank 0
@@ -25,13 +28,13 @@ class DataMemory:
         self.bank0[0x01] = [None] * 8
 
         # STATUS
-        self.bank0[0x03] = [0, 0, 0, 1, 1, None, None, None]
+        self.bank0[0x03] = [None, None, None, 1, 1, 0, 0, 0]
 
         # FSR
         self.bank0[0x04] = [None] * 8
 
         # PORTA
-        self.bank0[0x05] = [0, 0, 0, None, None, None, None, None]
+        self.bank0[0x05] = [None, None, None, None, None, 0, 0, 0]
 
         # PORTB
         self.bank0[0x06] = [None] * 8
@@ -46,7 +49,7 @@ class DataMemory:
         self.bank0[0x0A] = [0] * 8
 
         # INTCON
-        self.bank0[0x0B] = [0, 0, 0, 0, 0, 0, 0, None]
+        self.bank0[0x0B] = [None, 0, 0, 0, 0, 0, 0, 0]
 
     def initBank1(self):
 
@@ -55,22 +58,22 @@ class DataMemory:
         self.bank1[0x01] = [1] * 8
 
         # STATUS
-        self.bank1[0x03] = [0, 0, 0, 1, 1, None, None, None]
+        self.bank1[0x03] = [None, None, None, 1, 1, 0, 0, 0]
 
         # FSR
         self.bank1[0x04] = [None] * 8
 
         # TRISA
-        self.bank1[0x05] = [0, 0, 0, 1, 1, 1, 1, 1]
+        self.bank1[0x05] = [1, 1, 1, 1, 1,0, 0, 0]
 
         # TRISB
         self.bank1[0x06] = [1] * 8
 
         # EECON1
-        self.bank1[0x08] = [0, 0, 0, 0, None, 0, 0, 0]
+        self.bank1[0x08] = [0, 0, 0, None, 0, 0, 0, 0]
 
         # INTCON
-        self.bank1[0x0B] = [0, 0, 0, 0, 0, 0, 0, None]
+        self.bank1[0x0B] = [None, 0, 0, 0, 0, 0, 0, 0]
 
     def getActiveBank(self):
         return self.memory[0][0x03][5]  # STATUS register, bit 5 (RP0) indicates active bank
@@ -90,6 +93,8 @@ class DataMemory:
         if register == 'w':
             self.WREG = value
         elif register in range(0x00, 0x80):
+            if register in MIRRORED_REGISTERS:
+                self.memory[1 - self.getActiveBank()][register] = value
             self.memory[self.getActiveBank()][register] = value
         else:
             raise ValueError("Invalid register address")
@@ -98,6 +103,8 @@ class DataMemory:
         if register == 'w':
             self.WREG[bit] = value
         elif register in range(0x00, 0x80):
+            if register in MIRRORED_REGISTERS:
+                self.memory[1 - self.getActiveBank()][register][bit] = value
             self.memory[self.getActiveBank()][register][bit] = value
         else:
             raise ValueError("Invalid register address")
@@ -155,15 +162,4 @@ class Stack:
     
     def is_empty(self):
         return len(self.stack) == 0
-
-
-mem = DataMemory()
-
-print(mem.memory[0])
-
-print(mem.memory[0][0x03])
-
-print(mem.getActiveBank())
-#mem.setBit(0x03, 5, 1)
-
-#print(mem.memory[0])
+    
