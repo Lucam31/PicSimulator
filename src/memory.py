@@ -59,17 +59,20 @@ class DataMemory:
 
         # STATUS
         self.bank1[0x03] = [None, None, None, 1, 1, 0, 0, 0]
+        self.bank1[0x03] = [None, None, None, 1, 1, 0, 0, 0]
 
         # FSR
         self.bank1[0x04] = [None] * 8
 
         # TRISA
         self.bank1[0x05] = [1, 1, 1, 1, 1,0, 0, 0]
+        self.bank1[0x05] = [1, 1, 1, 1, 1,0, 0, 0]
 
         # TRISB
         self.bank1[0x06] = [1] * 8
 
         # EECON1
+        self.bank1[0x08] = [0, 0, 0, None, 0, 0, 0, 0]
         self.bank1[0x08] = [0, 0, 0, None, 0, 0, 0, 0]
 
         # INTCON
@@ -141,6 +144,8 @@ class DataMemory:
         if register == 'w':
             self.WREG = value
         elif register in range(0x00, 0x80):
+            if register in MIRRORED_REGISTERS:
+                self.memory[1 - self.getActiveBank()][register] = value
             self.memory[self.getActiveBank()][register] = value
         else:
             raise ValueError("Invalid register address")
@@ -149,6 +154,8 @@ class DataMemory:
         if register == 'w':
             self.WREG[bit] = value
         elif register in range(0x00, 0x80):
+            if register in MIRRORED_REGISTERS:
+                self.memory[1 - self.getActiveBank()][register][bit] = value
             self.memory[self.getActiveBank()][register][bit] = value
         else:
             raise ValueError("Invalid register address")
@@ -206,15 +213,4 @@ class Stack:
     
     def is_empty(self):
         return len(self.stack) == 0
-
-
-mem = DataMemory()
-
-print(mem.memory[0])
-
-print(mem.memory[0][0x03])
-
-print(mem.getActiveBank())
-#mem.setBit(0x03, 5, 1)
-
-#print(mem.memory[0])
+    
