@@ -59,20 +59,17 @@ class DataMemory:
 
         # STATUS
         self.bank1[0x03] = [None, None, None, 1, 1, 0, 0, 0]
-        self.bank1[0x03] = [None, None, None, 1, 1, 0, 0, 0]
 
         # FSR
         self.bank1[0x04] = [None] * 8
 
         # TRISA
         self.bank1[0x05] = [1, 1, 1, 1, 1,0, 0, 0]
-        self.bank1[0x05] = [1, 1, 1, 1, 1,0, 0, 0]
 
         # TRISB
         self.bank1[0x06] = [1] * 8
 
         # EECON1
-        self.bank1[0x08] = [0, 0, 0, None, 0, 0, 0, 0]
         self.bank1[0x08] = [0, 0, 0, None, 0, 0, 0, 0]
 
         # INTCON
@@ -131,6 +128,12 @@ class DataMemory:
 
     def getW(self):
         return self.WREG
+    
+    def getPCL(self):
+        return self.bank1[0x02]
+    
+    def setPCL(self, value):
+        self.writeRegister(0x02, value)
     
     def readRegister(self, register):
         if register == 'w':
