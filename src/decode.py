@@ -30,7 +30,7 @@ class Decoder:
         return masked >> 7
 
     def decode(self, cmd: hex) -> tuple:
-        #cmd = hex(cmd)
+        cmd = int(cmd, 16)
         if cmd == self.clrwdt: return ("clrwdt", None, 0)
         if cmd == self.retfie: return ("retfie", None, 0)
         if cmd == self.ret: return ("ret", None, 0)

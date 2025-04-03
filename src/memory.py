@@ -81,6 +81,12 @@ class DataMemory:
     def getW(self):
         return self.WREG
     
+    def getPCL(self):
+        return self.bank1[0x02]
+    
+    def setPCL(self, value):
+        self.writeRegister(0x02, value)
+    
     def readRegister(self, register):
         if register == 'w':
             return self.WREG
@@ -117,23 +123,36 @@ class DataMemory:
         else:
             raise ValueError("Invalid register address")
 
+    def getActiveBank(self):
+        return self.memory[0][0x03][5]  # STATUS register, bit 5 (RP0) indicates active bank
+
+    def getW(self):
+        return self.WREG
+    
+    def getPCL(self):
+        return self.bank1[0x02]
+    
+    def setPCL(self, value):
+        self.writeRegister(0x02, value)
+    
+
 class ProgramMemory:
     def __init__(self, size=1024):
         self.size = size
         self.memory = [0] * size
 
-    def write(self, address, value):
-        if address < 0 or address >= self.size:
-            raise ValueError("Address out of range")
-        self.memory[address] = value
+    def write(self, value):
+        self.memory = value
 
-    def read(self, address):
-        if address < 0 or address >= self.size:
+    def read(self, address=None):
+        if address == None: return self.memory
+        if address < 0 or address >= len(self.memory):
             raise ValueError("Address out of range")
         return self.memory[address]
-
+    
     def reset(self):
         self.memory = [0] * self.size
+
 
 
 
