@@ -12,7 +12,7 @@ class DataMemory:
     def __init__(self):
         self.bank0 = [[0] * 8] * 128  
         self.bank1 = [[0] * 8] * 128
-        self.WREG = [0] * 8  
+        self.WREG = 0
         
         self.initBank0()
         self.initBank1()
@@ -25,31 +25,31 @@ class DataMemory:
     def initBank0(self):
         # initialize Bank 0
         # TMR0 is unknown
-        self.bank0[0x01] = [None] * 8
+        self.bank0[0x01] = [0] * 8
 
         # STATUS
-        self.bank0[0x03] = [None, None, None, 1, 1, 0, 0, 0]
+        self.bank0[0x03] = [0, 0, 0, 1, 1, 0, 0, 0]
 
         # FSR
-        self.bank0[0x04] = [None] * 8
+        self.bank0[0x04] = [0] * 8
 
         # PORTA
-        self.bank0[0x05] = [None, None, None, None, None, 0, 0, 0]
+        self.bank0[0x05] = [0, 0, 0, 0, 0, 0, 0, 0]
 
         # PORTB
-        self.bank0[0x06] = [None] * 8
+        self.bank0[0x06] = [0] * 8
 
         # EEDATA
-        self.bank0[0x08] = [None] * 8
+        self.bank0[0x08] = [0] * 8
 
         # EEADR
-        self.bank0[0x09] = [None] * 8
+        self.bank0[0x09] = [0] * 8
 
         # PCLATH
         self.bank0[0x0A] = [0] * 8
 
         # INTCON
-        self.bank0[0x0B] = [None, 0, 0, 0, 0, 0, 0, 0]
+        self.bank0[0x0B] = [0, 0, 0, 0, 0, 0, 0, 0]
 
     def initBank1(self):
 
@@ -58,82 +58,85 @@ class DataMemory:
         self.bank1[0x01] = [1] * 8
 
         # STATUS
-        self.bank1[0x03] = [None, None, None, 1, 1, 0, 0, 0]
+        self.bank1[0x03] = [0, 0, 0, 1, 1, 0, 0, 0]
 
         # FSR
-        self.bank1[0x04] = [None] * 8
+        self.bank1[0x04] = [0] * 8
 
         # TRISA
-        self.bank1[0x05] = [1, 1, 1, 1, 1,0, 0, 0]
+        self.bank1[0x05] = [0, 0, 0, 1, 1, 1, 1, 1]
 
         # TRISB
         self.bank1[0x06] = [1] * 8
 
         # EECON1
-        self.bank1[0x08] = [0, 0, 0, None, 0, 0, 0, 0]
+        self.bank1[0x08] = [0, 0, 0, 0, 0, 0, 0, 0]
 
         # INTCON
-        self.bank1[0x0B] = [None, 0, 0, 0, 0, 0, 0, 0]
+        self.bank1[0x0B] = [0, 0, 0, 0, 0, 0, 0, 0]
 
     def getActiveBank(self):
-        return self.memory[0][0x03][5]  # STATUS register, bit 5 (RP0) indicates active bank
+        return self.memory[0][0x03][7-5]  # STATUS register, bit 5 (RP0) indicates active bank
 
-    def getW(self):
+    def getW(self) -> int:
         return self.WREG
     
-    def getPCL(self):
-        return self.bank1[0x02]
+    def getPCL(self) -> int:
+        return self.readRegister(0x02)
     
-    def setPCL(self, value):
+    def setPCL(self, value: int) -> None:
         self.writeRegister(0x02, value)
+
+    def incPCL(self) -> None:
+        newVal = self.readRegister(0x02) + 1
+        # self.bank0[0x02] = newVal
+        # self.bank1[0x02] = newVal
+        self.setPCL(newVal)
     
-    def readRegister(self, register):
+    def readRegister(self, register: int) -> int:
         if register == 'w':
             return self.WREG
         elif register in range(0x00, 0x80):
-            return self.memory[self.getActiveBank()][register]
+            if register == 0:
+                register = self.readRegister(4)
+            return int(("".join([str(x) for x in self.memory[self.getActiveBank()][register]])),2)
+            # return int(self.memory[self.getActiveBank()][register],2)
         else:
             raise ValueError("Invalid register address")
 
-    def writeRegister(self, register, value):
+    def writeRegister(self, register: int, value: int) -> None:
         if register == 'w':
             self.WREG = value
         elif register in range(0x00, 0x80):
+            test = bin(value)[2:]
+            if register == 0:
+                register = self.readRegister(4)
+            string = ('0'*(8-len(test))) + test
+            activeReg = self.getActiveBank()
             if register in MIRRORED_REGISTERS:
-                self.memory[1 - self.getActiveBank()][register] = value
-            self.memory[self.getActiveBank()][register] = value
+                self.memory[1 - activeReg][register] = [int(char) for char in string]
+            self.memory[activeReg][register] = [int(char) for char in string]
         else:
             raise ValueError("Invalid register address")
         
-    def setBit(self, register, bit, value):
-        if register == 'w':
-            self.WREG[bit] = value
-        elif register in range(0x00, 0x80):
+    def setBit(self, register: int, bit: int, value: int) -> None:
+        if register in range(0x00, 0x80):
+            if register == 0:
+                register = self.readRegister(4)
             if register in MIRRORED_REGISTERS:
-                self.memory[1 - self.getActiveBank()][register][bit] = value
-            self.memory[self.getActiveBank()][register][bit] = value
+                self.memory[1 - self.getActiveBank()][register][7-bit] = value
+            self.memory[self.getActiveBank()][register][7-bit] = value
         else:
             raise ValueError("Invalid register address")
         
-    def getBit(self, register, bit):
-        if register == 'w':
-            return self.WREG[bit]
-        elif register in range(0x00, 0x80):
-            return self.memory[self.getActiveBank()][register][bit]
+    def getBit(self, register: int, bit: int) -> int:
+        if register in range(0x00, 0x80):
+            if register == 0:
+                register = self.readRegister(4)
+            return self.memory[self.getActiveBank()][register][7-bit]
         else:
             raise ValueError("Invalid register address")
 
-    def getActiveBank(self):
-        return self.memory[0][0x03][5]  # STATUS register, bit 5 (RP0) indicates active bank
-
-    def getW(self):
-        return self.WREG
-    
-    def getPCL(self):
-        return self.bank1[0x02]
-    
-    def setPCL(self, value):
-        self.writeRegister(0x02, value)
     
 
 class ProgramMemory:

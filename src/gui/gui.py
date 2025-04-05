@@ -6,23 +6,33 @@ from cpu import CPU
 
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
     QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
+    QSize, QTime, QUrl, Qt, Slot, SLOT)
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
+    QPalette, QPixmap, QRadialGradient, QTransform, QAction)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
     QHBoxLayout, QLabel, QLayout, QLineEdit,
     QMainWindow, QMenuBar, QPlainTextEdit, QPushButton,
     QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout,
-    QWidget)
+    QWidget, QMenu, QFileDialog)
 
 class Ui_MainWindow(object):
+    @Slot()
+    def on_finished(self) -> None:
+        for path in self.dialog.selectedFiles():
+            self.cpu.load_program(path)
+            print(self.cpu.getFile())
     def setupUi(self, MainWindow):
-        #cpu = CPU(self)
+        self.cpu = CPU(self)
+        # self.cpu.load_program()
+        # self.cpu.execute()
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1200, 800)
+
+
+
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayoutWidget = QWidget(self.centralwidget)
@@ -723,6 +733,7 @@ class Ui_MainWindow(object):
 
         self.go = QPushButton(self.horizontalLayoutWidget)
         self.go.setObjectName(u"go")
+        self.go.clicked.connect(self.cpu.execute)
 
         self.CTRLBTNS.addWidget(self.go, 1, 0, 1, 1)
 
@@ -764,6 +775,24 @@ class Ui_MainWindow(object):
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
         self.menubar.setGeometry(QRect(0, 0, 1200, 37))
+
+
+        self.dialog = QFileDialog(MainWindow)
+
+        self.dialog.setFileMode(QFileDialog.ExistingFiles)
+        self.dialog.setNameFilter("*.LST *.lst")
+        self.dialog.setWindowTitle('Open File...')
+        self.dialog.finished.connect(self.on_finished)
+
+
+        fileMenu = QMenu("&File", MainWindow)
+        self.actionOpen = QAction(QIcon.fromTheme("document-open"), "Open File", MainWindow)
+        self.actionOpen.setStatusTip("Open LST File")
+        self.actionOpen.setShortcut(QKeySequence.Open)
+        self.actionOpen.triggered.connect(self.dialog.open)
+        fileMenu.addAction(self.actionOpen)
+        self.menubar.addMenu(fileMenu)
+
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
