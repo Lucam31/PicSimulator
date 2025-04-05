@@ -3,20 +3,20 @@ from decode import Decoder
 from fileReader import FileReader
 from alu import ALU
 
-
 class CPU:
-    def __init__(self):
+    def __init__(self, gui):
+        self.gui = gui
         self.pMemory = ProgramMemory()
         self.dMemory = DataMemory()
         self.stack = Stack()
         self.decoder = Decoder()
         self.file_reader = FileReader(self.pMemory)
         self.alu = ALU(self.dMemory)
-        self.program_file = "/Testprogramme/TPicSim7.LST"
+        self.program_file = "/Testprogramme/TPicSim6.LST"
 
 
     def load_program(self):
-        self.file_reader.read_and_filter_lines(self.program_file)
+        self.file_reader.readFile(self.program_file)
 
     def execute(self):
         self.timer = 0
@@ -126,8 +126,7 @@ class CPU:
         return hexMem
 
 
-if __name__ == "__main__":
-    test = CPU()
-    # test.load_program()
-    # test.execute()
-    print(test.getMemInHex())
+# if __name__ == "__main__":
+#     test = CPU()
+#     test.load_program()
+#     test.execute()
