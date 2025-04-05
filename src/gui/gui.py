@@ -19,7 +19,9 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        #cpu = CPU(self)
+        cpu = CPU(self)
+        # cpu.load_program()
+        # cpu.execute()
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1200, 800)

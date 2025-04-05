@@ -15,8 +15,11 @@ class FileReader:
         except Exception as e:
             print(f"An error occurred: {e}")
             return []
+        self.filter_lines()
         
-    def read_and_filter_lines(self, file_path):
+    def filter_lines(self) -> None:
+        if self.file == None:
+            raise Exception("No File was loaded!")
         filtered_lines = []
         for line in self.file:
             filtered_lines.append(line[5:9])
