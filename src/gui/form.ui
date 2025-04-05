@@ -4859,7 +4859,7 @@
      <rect>
       <x>350</x>
       <y>270</y>
-      <width>160</width>
+      <width>311</width>
       <height>80</height>
      </rect>
     </property>
@@ -4870,7 +4870,7 @@
      <rect>
       <x>730</x>
       <y>0</y>
-      <width>420</width>
+      <width>441</width>
       <height>241</height>
      </rect>
     </property>
@@ -5352,6 +5352,168 @@
         </widget>
        </item>
       </layout>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="horizontalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>680</x>
+      <y>270</y>
+      <width>490</width>
+      <height>85</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="EXECINFOS">
+     <item>
+      <layout class="QVBoxLayout" name="QUARTTIME">
+       <item>
+        <widget class="QLabel" name="Freq_K">
+         <property name="font">
+          <font>
+           <pointsize>13</pointsize>
+           <bold>true</bold>
+           <underline>false</underline>
+          </font>
+         </property>
+         <property name="text">
+          <string>Quarzfrequenz</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="Freq_V">
+         <property name="text">
+          <string>4,000000 MHz</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>1,000us</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="EXECTIME">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="Time_K">
+         <property name="font">
+          <font>
+           <pointsize>13</pointsize>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Laufzeit</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="Time_V">
+         <property name="text">
+          <string>0,00 us</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignmentFlag::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton">
+         <property name="text">
+          <string>zurücksetzen</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QGridLayout" name="CTRLBTNS">
+       <property name="horizontalSpacing">
+        <number>-1</number>
+       </property>
+       <item row="1" column="1">
+        <widget class="QPushButton" name="stepin">
+         <property name="text">
+          <string>Step in</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="ignore">
+         <property name="text">
+          <string>Ignore</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QPushButton" name="reset">
+         <property name="text">
+          <string>Reset</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QPushButton" name="go">
+         <property name="text">
+          <string>Go</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+        <widget class="QPushButton" name="stepover">
+         <property name="text">
+          <string>Step over</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="2">
+        <widget class="QPushButton" name="stepout">
+         <property name="text">
+          <string>Step out</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QWidget" name="horizontalLayoutWidget_2">
+    <property name="geometry">
+     <rect>
+      <x>350</x>
+      <y>380</y>
+      <width>821</width>
+      <height>361</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="FILEFIELD">
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QCheckBox" name="checkBox">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <widget class="QPlainTextEdit" name="plainTextEdit"/>
      </item>
     </layout>
    </widget>

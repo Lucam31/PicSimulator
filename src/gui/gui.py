@@ -17,8 +17,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
     QHBoxLayout, QLabel, QLayout, QLineEdit,
-    QMainWindow, QMenuBar, QPushButton, QSizePolicy,
-    QSpacerItem, QStatusBar, QVBoxLayout, QWidget)
+    QMainWindow, QMenuBar, QPlainTextEdit, QPushButton,
+    QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout,
+    QWidget)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -29,7 +30,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayoutWidget = QWidget(self.centralwidget)
         self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
-        self.verticalLayoutWidget.setGeometry(QRect(20, 0, 280, 761))
+        self.verticalLayoutWidget.setGeometry(QRect(10, 10, 280, 760))
         self.MEM = QVBoxLayout(self.verticalLayoutWidget)
         self.MEM.setSpacing(0)
         self.MEM.setObjectName(u"MEM")
@@ -2314,7 +2315,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayoutWidget_2 = QWidget(self.centralwidget)
         self.verticalLayoutWidget_2.setObjectName(u"verticalLayoutWidget_2")
-        self.verticalLayoutWidget_2.setGeometry(QRect(350, 0, 351, 241))
+        self.verticalLayoutWidget_2.setGeometry(QRect(350, 10, 351, 241))
         self.PINS = QVBoxLayout(self.verticalLayoutWidget_2)
         self.PINS.setObjectName(u"PINS")
         self.PINS.setContentsMargins(0, 0, 0, 0)
@@ -2718,13 +2719,13 @@ class Ui_MainWindow(object):
 
         self.horizontalLayoutWidget_4 = QWidget(self.centralwidget)
         self.horizontalLayoutWidget_4.setObjectName(u"horizontalLayoutWidget_4")
-        self.horizontalLayoutWidget_4.setGeometry(QRect(350, 270, 160, 80))
+        self.horizontalLayoutWidget_4.setGeometry(QRect(350, 270, 311, 60))
         self.LEDS = QHBoxLayout(self.horizontalLayoutWidget_4)
         self.LEDS.setObjectName(u"LEDS")
         self.LEDS.setContentsMargins(0, 0, 0, 0)
         self.verticalLayoutWidget_3 = QWidget(self.centralwidget)
         self.verticalLayoutWidget_3.setObjectName(u"verticalLayoutWidget_3")
-        self.verticalLayoutWidget_3.setGeometry(QRect(730, 0, 420, 241))
+        self.verticalLayoutWidget_3.setGeometry(QRect(740, 10, 450, 250))
         self.SFR = QVBoxLayout(self.verticalLayoutWidget_3)
         self.SFR.setObjectName(u"SFR")
         self.SFR.setContentsMargins(0, 0, 0, 0)
@@ -3049,6 +3050,122 @@ class Ui_MainWindow(object):
 
 
         self.SFR.addLayout(self.Status_REG)
+
+        self.horizontalLayoutWidget = QWidget(self.centralwidget)
+        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
+        self.horizontalLayoutWidget.setGeometry(QRect(680, 270, 490, 90))
+        self.EXECINFOS = QHBoxLayout(self.horizontalLayoutWidget)
+        self.EXECINFOS.setObjectName(u"EXECINFOS")
+        self.EXECINFOS.setContentsMargins(0, 0, 0, 0)
+        self.QUARTTIME = QVBoxLayout()
+        self.QUARTTIME.setObjectName(u"QUARTTIME")
+        self.Freq_K = QLabel(self.horizontalLayoutWidget)
+        self.Freq_K.setObjectName(u"Freq_K")
+        font = QFont()
+        font.setPointSize(13)
+        font.setBold(True)
+        font.setUnderline(False)
+        self.Freq_K.setFont(font)
+
+        self.QUARTTIME.addWidget(self.Freq_K)
+
+        self.Freq_V = QLabel(self.horizontalLayoutWidget)
+        self.Freq_V.setObjectName(u"Freq_V")
+        self.Freq_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.QUARTTIME.addWidget(self.Freq_V)
+
+        self.label = QLabel(self.horizontalLayoutWidget)
+        self.label.setObjectName(u"label")
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.QUARTTIME.addWidget(self.label)
+
+
+        self.EXECINFOS.addLayout(self.QUARTTIME)
+
+        self.EXECTIME = QVBoxLayout()
+        self.EXECTIME.setObjectName(u"EXECTIME")
+        self.EXECTIME.setContentsMargins(0, -1, -1, -1)
+        self.Time_K = QLabel(self.horizontalLayoutWidget)
+        self.Time_K.setObjectName(u"Time_K")
+        font1 = QFont()
+        font1.setPointSize(13)
+        font1.setBold(True)
+        self.Time_K.setFont(font1)
+
+        self.EXECTIME.addWidget(self.Time_K)
+
+        self.Time_V = QLabel(self.horizontalLayoutWidget)
+        self.Time_V.setObjectName(u"Time_V")
+        self.Time_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.EXECTIME.addWidget(self.Time_V)
+
+        self.pushButton = QPushButton(self.horizontalLayoutWidget)
+        self.pushButton.setObjectName(u"pushButton")
+
+        self.EXECTIME.addWidget(self.pushButton)
+
+
+        self.EXECINFOS.addLayout(self.EXECTIME)
+
+        self.CTRLBTNS = QGridLayout()
+        self.CTRLBTNS.setObjectName(u"CTRLBTNS")
+        self.CTRLBTNS.setHorizontalSpacing(-1)
+        self.stepin = QPushButton(self.horizontalLayoutWidget)
+        self.stepin.setObjectName(u"stepin")
+
+        self.CTRLBTNS.addWidget(self.stepin, 1, 1, 1, 1)
+
+        self.ignore = QPushButton(self.horizontalLayoutWidget)
+        self.ignore.setObjectName(u"ignore")
+
+        self.CTRLBTNS.addWidget(self.ignore, 0, 1, 1, 1)
+
+        self.reset = QPushButton(self.horizontalLayoutWidget)
+        self.reset.setObjectName(u"reset")
+
+        self.CTRLBTNS.addWidget(self.reset, 0, 0, 1, 1)
+
+        self.go = QPushButton(self.horizontalLayoutWidget)
+        self.go.setObjectName(u"go")
+
+        self.CTRLBTNS.addWidget(self.go, 1, 0, 1, 1)
+
+        self.stepover = QPushButton(self.horizontalLayoutWidget)
+        self.stepover.setObjectName(u"stepover")
+
+        self.CTRLBTNS.addWidget(self.stepover, 1, 2, 1, 1)
+
+        self.stepout = QPushButton(self.horizontalLayoutWidget)
+        self.stepout.setObjectName(u"stepout")
+
+        self.CTRLBTNS.addWidget(self.stepout, 0, 2, 1, 1)
+
+
+        self.EXECINFOS.addLayout(self.CTRLBTNS)
+
+        self.horizontalLayoutWidget_2 = QWidget(self.centralwidget)
+        self.horizontalLayoutWidget_2.setObjectName(u"horizontalLayoutWidget_2")
+        self.horizontalLayoutWidget_2.setGeometry(QRect(350, 380, 821, 361))
+        self.FILEFIELD = QHBoxLayout(self.horizontalLayoutWidget_2)
+        self.FILEFIELD.setObjectName(u"FILEFIELD")
+        self.FILEFIELD.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout_2 = QVBoxLayout()
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.checkBox = QCheckBox(self.horizontalLayoutWidget_2)
+        self.checkBox.setObjectName(u"checkBox")
+
+        self.verticalLayout_2.addWidget(self.checkBox)
+
+
+        self.FILEFIELD.addLayout(self.verticalLayout_2)
+
+        self.plainTextEdit = QPlainTextEdit(self.horizontalLayoutWidget_2)
+        self.plainTextEdit.setObjectName(u"plainTextEdit")
+
+        self.FILEFIELD.addWidget(self.plainTextEdit)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
@@ -3476,5 +3593,18 @@ class Ui_MainWindow(object):
         self.PD_V.setText("")
         self.label_13.setText(QCoreApplication.translate("MainWindow", u"PD", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"RP", None))
+        self.Freq_K.setText(QCoreApplication.translate("MainWindow", u"Quarzfrequenz", None))
+        self.Freq_V.setText(QCoreApplication.translate("MainWindow", u"4,000000 MHz", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"1,000us", None))
+        self.Time_K.setText(QCoreApplication.translate("MainWindow", u"Laufzeit", None))
+        self.Time_V.setText(QCoreApplication.translate("MainWindow", u"0,00 us", None))
+        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"zur\u00fccksetzen", None))
+        self.stepin.setText(QCoreApplication.translate("MainWindow", u"Step in", None))
+        self.ignore.setText(QCoreApplication.translate("MainWindow", u"Ignore", None))
+        self.reset.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
+        self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
+        self.stepover.setText(QCoreApplication.translate("MainWindow", u"Step over", None))
+        self.stepout.setText(QCoreApplication.translate("MainWindow", u"Step out", None))
+        self.checkBox.setText("")
     # retranslateUi
 
