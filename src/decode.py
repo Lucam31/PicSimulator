@@ -33,9 +33,9 @@ class Decoder:
         cmd = int(cmd, 16)
         if cmd == self.clrwdt: return ("clrwdt", None, 0)
         if cmd == self.retfie: return ("retfie", None, 0)
-        if cmd == self.ret: return ("ret", None, 0)
-        if cmd == self.sleep: return ("sleep", None, 0)
-        if (cmd & self.nop) == 0: return ("nop", None, 0)
+        if cmd == self.ret: return ("ret", None, 0)#
+        if cmd == self.sleep: return ("sleep", None, 0)#
+        if (cmd & self.nop) == 0: return ("nop", None, 0)#
 
         #11 1000 0000 0000
         masked1 = cmd & self.mask1
