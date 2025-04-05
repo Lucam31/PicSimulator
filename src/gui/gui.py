@@ -39,9 +39,9 @@ class Ui_MainWindow(object):
             self.cpu.pauseThread = True
     def setupUi(self, MainWindow):
         self.cpu = CPU(self)
-        self.pause_event = threading.Event()
         self.cpuThread = threading.Thread(target=self.cpu.execute)
-
+        # cpu.load_program()
+        # cpu.execute()
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1200, 800)
