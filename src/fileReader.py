@@ -7,7 +7,7 @@ class FileReader:
 
     def readFile(self, filePath):
         try:
-            with open(os.getcwd()+filePath, 'r') as file:
+            with open(filePath, 'r') as file:
                 self.file = file.readlines()
         except FileNotFoundError:
             print(f"Error: File '{filePath}' not found.")

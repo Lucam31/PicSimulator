@@ -2,6 +2,7 @@ from memory import ProgramMemory, DataMemory, Stack
 from decode import Decoder
 from fileReader import FileReader
 from alu import ALU
+import os
 
 class CPU:
     def __init__(self, gui):
@@ -10,15 +11,18 @@ class CPU:
         self.dMemory = DataMemory()
         self.stack = Stack()
         self.decoder = Decoder()
-        self.file_reader = FileReader(self.pMemory)
+        self.fileReader = FileReader(self.pMemory)
         self.alu = ALU(self.dMemory)
-        self.program_file = "/Testprogramme/TPicSim6.LST"
+        self.program_file = os.getcwd() + "/Testprogramme/TPicSim6.LST"
+        self.ready = False
+        
 
-
-    def load_program(self):
-        self.file_reader.readFile(self.program_file)
+    def load_program(self, path=None):
+        self.fileReader.readFile(self.program_file if path == None else path)
+        self.ready = True
 
     def execute(self):
+        if not self.ready: return
         self.timer = 0
         while(1):
             cmd = self.pMemory.read(self.dMemory.getPCL())
@@ -124,6 +128,9 @@ class CPU:
             string = ("".join([str(x) for x in hexMem[i]]))
             hexMem[i] = hex(int(string, 2))
         return hexMem
+    
+    def getFile(self):
+        return self.fileReader.getFile()
 
 
 # if __name__ == "__main__":
