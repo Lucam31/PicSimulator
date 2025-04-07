@@ -10,6 +10,9 @@ MIRRORED_REGISTERS = {
 
 class DataMemory:
     def __init__(self):
+        self.initialize()
+
+    def initialize(self):
         self.bank0 = [[0] * 8] * 128  
         self.bank1 = [[0] * 8] * 128
         self.WREG = 0
@@ -137,12 +140,14 @@ class DataMemory:
         else:
             raise ValueError("Invalid register address")
 
-    
+    def getPrescaler(self):
+        scaler = ("".join([str(x) for x in self.memory[1][0x01]]))
+        return (int(scaler[2]), int(scaler[4]), int(scaler, 2) & 0x07)
+
 
 class ProgramMemory:
-    def __init__(self, size=1024):
-        self.size = size
-        self.memory = [0] * size
+    def __init__(self):
+        self.memory = []
 
     def write(self, value):
         self.memory = value
@@ -154,7 +159,7 @@ class ProgramMemory:
         return self.memory[address]
     
     def reset(self):
-        self.memory = [0] * self.size
+        self.memory = []
 
 
 

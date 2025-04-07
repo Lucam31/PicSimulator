@@ -3,10 +3,12 @@ from decode import Decoder
 from fileReader import FileReader
 from alu import ALU
 import os
+from time import sleep
 
 class CPU:
     def __init__(self, gui=None):
         self.gui = gui
+        self.guiSet = False if gui == None else True
         self.pMemory = ProgramMemory()
         self.dMemory = DataMemory()
         self.stack = Stack()
@@ -15,6 +17,9 @@ class CPU:
         self.alu = ALU(self.dMemory)
         self.program_file = os.getcwd() + "/Testprogramme/TPicSim7.LST"
         self.ready = False
+        self.stopThread = False
+        self.pauseThread = True
+        self.clock = 0
         
 
     def load_program(self, path=None):
@@ -23,8 +28,11 @@ class CPU:
 
     def execute(self):
         if not self.ready: return
-        self.timer = 0
         while(1):
+            while(self.pauseThread):
+                if(self.stopThread): break
+            if(self.stopThread): 
+                break
             cmd = self.pMemory.read(self.dMemory.getPCL())
             inst = self.decoder.decode('0x'+str(cmd))
             print(inst)
@@ -48,19 +56,26 @@ class CPU:
                 case 'goto':
                     if self.dMemory.getPCL() == inst[1]: break
                     self.dMemory.setPCL(inst[1])
+                    self.clock += 1
                 case 'sleep':
-                    self.timer += 1#inst[1]
+                    self.clock += 1#inst[1]
                     # fehlt noch was
                 case 'call':
                     self.stack.push(self.dMemory.getPCL()+1)
                     self.dMemory.setPCL(inst[1])
+                    self.clock += 1
                 case 'ret':
                     self.dMemory.setPCL(self.stack.pop())
+                    self.clock += 1
                 case 'nop':
                     pass
                 case 'retlw':
                     self.dMemory.writeRegister('w', inst[1])
                     self.dMemory.setPCL(self.stack.pop())
+                    self.clock += 1
+                case 'retfie':
+                    self.clock += 1
+                    # implementation missing
                 case 'clrf':
                     self.dMemory.writeRegister(inst[1], 0)
                 case 'clrw':
@@ -70,13 +85,17 @@ class CPU:
                 case 'incfsz':
                     val = self.alu.addWithoutW(self.dMemory.readRegister(inst[1]), 1)
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
-                    if val == 0: self.dMemory.incPCL()
+                    if val == 0: 
+                        self.dMemory.incPCL()
+                        self.clock += 1
                 case 'decf':
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', self.alu.subWithoutW(self.dMemory.readRegister(inst[1]), 1))
                 case 'decfsz':
                     val = self.alu.subWithoutW(self.dMemory.readRegister(inst[1]), 1)
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
-                    if val == 0: self.dMemory.incPCL()
+                    if val == 0: 
+                        self.dMemory.incPCL()
+                        self.clock += 1
                 case 'swapf':
                     keep = bin(self.dMemory.readRegister(inst[1]))[2:]
                     keep = '0'*(8-len(keep)) + keep
@@ -105,17 +124,29 @@ class CPU:
                 case 'bsf':
                     self.dMemory.setBit(inst[1], inst[2], 1)
                 case 'btfsc':
-                    if not self.dMemory.getBit(inst[1], inst[2]): self.dMemory.incPCL()
+                    if not self.dMemory.getBit(inst[1], inst[2]): 
+                        self.dMemory.incPCL()
+                        self.clock += 1
                 case 'btfss':
-                    if self.dMemory.getBit(inst[1], inst[2]): self.dMemory.incPCL()
+                    if self.dMemory.getBit(inst[1], inst[2]): 
+                        self.dMemory.incPCL()
+                        self.clock += 1
                 # clrwdt, retfie
-            # self.dMemory.writeRegister(0x01, int(self.timer/4))
+            # increase timer and counter
+            self.clock += 1
+            t0cs, psa, scaling = self.dMemory.getPrescaler()
+            if not t0cs and not psa:
+                try:
+                    self.dMemory.writeRegister(0x01, int(self.clock/scaling) & 0xFF)
+                except: pass
+
             print("W: " + hex(self.dMemory.getW()))
             print("Wert1: " + hex(self.dMemory.readRegister(12)))
             print("Wert2: " + hex(self.dMemory.readRegister(13)))
             # print("FSR: " + hex(self.dMemory.readRegister(4)))
             print("")
-            self.gui.updateUI()
+            if self.guiSet: self.gui.updateUI()
+            sleep(0.05)
 
         keep = self.dMemory.getW()
         print("W: " + hex(keep))
@@ -133,6 +164,13 @@ class CPU:
     
     def getFile(self):
         return self.fileReader.getFile()
+    
+    def reset(self):
+        self.clock = 0
+        self.dMemory.initialize()
+        self.stack.stack = []
+        self.pauseThread = True
+        self.gui.updateUI()
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import sys
 import os
+import threading
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from cpu import CPU
@@ -23,10 +24,24 @@ class Ui_MainWindow(object):
         for path in self.dialog.selectedFiles():
             self.cpu.load_program(path)
             self.plainTextEdit.setPlainText(self.cpu.getFile())
+        self.cpuThread.start()
+    @Slot()
+    def onReset(self) -> None:
+        self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
+        self.cpu.reset()
+    @Slot()
+    def toggleThread(self) -> None:
+        if self.go.text() == "Go":
+            self.go.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
+            self.cpu.pauseThread = False
+        else:
+            self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
+            self.cpu.pauseThread = True
     def setupUi(self, MainWindow):
         self.cpu = CPU(self)
-        # self.cpu.load_program()
-        # self.cpu.execute()
+        self.pause_event = threading.Event()
+        self.cpuThread = threading.Thread(target=self.cpu.execute)
+
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
         MainWindow.resize(1200, 800)
@@ -728,12 +743,13 @@ class Ui_MainWindow(object):
 
         self.reset = QPushButton(self.horizontalLayoutWidget)
         self.reset.setObjectName(u"reset")
+        self.reset.clicked.connect(self.onReset)
 
         self.CTRLBTNS.addWidget(self.reset, 0, 0, 1, 1)
 
         self.go = QPushButton(self.horizontalLayoutWidget)
         self.go.setObjectName(u"go")
-        self.go.clicked.connect(self.cpu.execute)
+        self.go.clicked.connect(self.toggleThread)
 
         self.CTRLBTNS.addWidget(self.go, 1, 0, 1, 1)
 
@@ -768,6 +784,9 @@ class Ui_MainWindow(object):
 
         self.plainTextEdit = QPlainTextEdit(self.horizontalLayoutWidget_2)
         self.plainTextEdit.setObjectName(u"plainTextEdit")
+        # font3 = QFont("Consolas")
+        # font3.setFamily('Monospace')
+        # self.plainTextEdit.setFont(font3)
 
         self.FILEFIELD.addWidget(self.plainTextEdit)
 
@@ -918,4 +937,4 @@ class Ui_MainWindow(object):
         for i in range(len(memory)):
             self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
         self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.getW(), '02X'), None))
-
+        self.Time_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.clock) + " us", None))
