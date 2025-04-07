@@ -22,7 +22,7 @@ class Ui_MainWindow(object):
     def on_finished(self) -> None:
         for path in self.dialog.selectedFiles():
             self.cpu.load_program(path)
-            print(self.cpu.getFile())
+            self.plainTextEdit.setPlainText(self.cpu.getFile())
     def setupUi(self, MainWindow):
         self.cpu = CPU(self)
         # self.cpu.load_program()
@@ -908,5 +908,14 @@ class Ui_MainWindow(object):
         self.stepover.setText(QCoreApplication.translate("MainWindow", u"Step over", None))
         self.stepout.setText(QCoreApplication.translate("MainWindow", u"Step out", None))
         self.checkBox.setText("")
+
+
+        self.updateUI()
     # retranslateUi
+
+    def updateUI(self):
+        memory = self.cpu.getMemInHex()
+        for i in range(len(memory)):
+            self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
+        self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.getW(), '02X'), None))
 

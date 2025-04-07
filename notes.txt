@@ -22,3 +22,17 @@ DataMemory Funktionen:
 - getW()
 - setBit(register, bit, value)
 - getBit(register, bit)
+
+
+
+
+PCLATH (eigene variable für PCL da mit oberen zwei bits des pclath verknüpft)
+Vorteiler (siehe Themenblatt Simulator)
+DC (auch invertiert bei subtraktion)
+was passiert wenn neue datei geladen wird (Power On Reset)
+
+
+bei schreiben eines ergebnisses einer operation in das file register prüfen ob das file register pcl ist
+dann shit mit pclath machen
+
+wenn port pins verändert werden direkt aktualisieren (oberfläche?) oder wenn auf oberfläche etwas geändert wird im code aktualisieren
