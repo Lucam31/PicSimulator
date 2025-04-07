@@ -5,7 +5,7 @@ from alu import ALU
 import os
 
 class CPU:
-    def __init__(self, gui):
+    def __init__(self, gui=None):
         self.gui = gui
         self.pMemory = ProgramMemory()
         self.dMemory = DataMemory()
@@ -13,7 +13,7 @@ class CPU:
         self.decoder = Decoder()
         self.fileReader = FileReader(self.pMemory)
         self.alu = ALU(self.dMemory)
-        self.program_file = os.getcwd() + "/Testprogramme/TPicSim6.LST"
+        self.program_file = os.getcwd() + "/Testprogramme/TPicSim7.LST"
         self.ready = False
         
 
@@ -109,6 +109,7 @@ class CPU:
                 case 'btfss':
                     if self.dMemory.getBit(inst[1], inst[2]): self.dMemory.incPCL()
                 # clrwdt, retfie
+            self.dMemory.writeRegister(0x01, int(self.timer/4))
             print("W: " + hex(self.dMemory.getW()))
             print("Wert1: " + hex(self.dMemory.readRegister(12)))
             print("Wert2: " + hex(self.dMemory.readRegister(13)))
@@ -133,7 +134,7 @@ class CPU:
         return self.fileReader.getFile()
 
 
-# if __name__ == "__main__":
-#     test = CPU()
-#     test.load_program()
-#     test.execute()
+if __name__ == "__main__":
+    test = CPU()
+    test.load_program()
+    test.execute()

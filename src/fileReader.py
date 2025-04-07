@@ -32,7 +32,7 @@ class FileReader:
         
         
     def getFile(self):
-        return self.file
+        return '\n'.join(self.file)
 
 # Example usage:
 # file_reader = FileReader('example.txt')

@@ -22,3 +22,11 @@ DataMemory Funktionen:
 - getW()
 - setBit(register, bit, value)
 - getBit(register, bit)
+
+
+
+
+PCLATH
+Vorteiler
+DC
+
