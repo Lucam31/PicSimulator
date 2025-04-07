@@ -6,17 +6,35 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from cpu import CPU
 
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt, Slot, SLOT)
+                            QMetaObject, QObject, QPoint, QRect,
+                            QSize, QTime, QUrl, Qt, Slot, SLOT, QTimer)
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform, QAction)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, QGridLayout,
+                           QFont, QFontDatabase, QGradient, QIcon,
+                           QImage, QKeySequence, QLinearGradient, QPainter,
+                           QPalette, QPixmap, QRadialGradient, QTransform, QAction, QDesktopServices)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame,
     QHBoxLayout, QLabel, QLayout, QLineEdit,
     QMainWindow, QMenuBar, QPlainTextEdit, QPushButton,
     QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout,
     QWidget, QMenu, QFileDialog)
+
+class LEDWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.led_state = False
+        self.setFixedSize(30, 30)
+
+    def toggle_led(self):
+        self.led_state = not self.led_state
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        led_color = QColor(255, 172, 28) if self.led_state else QColor(194, 24, 8)  # Grün für an, Rot für aus
+
+        painter.setBrush(led_color)
+        painter.setPen(Qt.NoPen)
+        painter.drawEllipse(0, 0, self.width(), self.height())
 
 class Ui_MainWindow(object):
     @Slot()
@@ -44,7 +62,7 @@ class Ui_MainWindow(object):
         # cpu.execute()
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1200, 800)
+        MainWindow.resize(1300, 800)
 
 
 
@@ -52,7 +70,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayoutWidget = QWidget(self.centralwidget)
         self.verticalLayoutWidget.setObjectName(u"verticalLayoutWidget")
-        self.verticalLayoutWidget.setGeometry(QRect(10, 10, 280, 760))
+        self.verticalLayoutWidget.setGeometry(QRect(20, 20, 280, 760))
         self.MEM = QVBoxLayout(self.verticalLayoutWidget)
         self.MEM.setSpacing(0)
         self.MEM.setObjectName(u"MEM")
@@ -148,7 +166,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayoutWidget_2 = QWidget(self.centralwidget)
         self.verticalLayoutWidget_2.setObjectName(u"verticalLayoutWidget_2")
-        self.verticalLayoutWidget_2.setGeometry(QRect(350, 10, 351, 241))
+        self.verticalLayoutWidget_2.setGeometry(QRect(350, 20, 350, 240))
         self.PINS = QVBoxLayout(self.verticalLayoutWidget_2)
         self.PINS.setObjectName(u"PINS")
         self.PINS.setContentsMargins(0, 0, 0, 0)
@@ -378,13 +396,19 @@ class Ui_MainWindow(object):
 
         self.horizontalLayoutWidget_4 = QWidget(self.centralwidget)
         self.horizontalLayoutWidget_4.setObjectName(u"horizontalLayoutWidget_4")
-        self.horizontalLayoutWidget_4.setGeometry(QRect(350, 270, 311, 60))
+        self.horizontalLayoutWidget_4.setGeometry(QRect(350, 280, 350, 60))
         self.LEDS = QHBoxLayout(self.horizontalLayoutWidget_4)
         self.LEDS.setObjectName(u"LEDS")
-        self.LEDS.setContentsMargins(0, 0, 0, 0)
+
+        self.ledslst = [LEDWidget] * 8
+
+        for i in range(8):
+            self.ledslst[i] = LEDWidget()
+            self.LEDS.addWidget(self.ledslst[i])
+
         self.verticalLayoutWidget_3 = QWidget(self.centralwidget)
         self.verticalLayoutWidget_3.setObjectName(u"verticalLayoutWidget_3")
-        self.verticalLayoutWidget_3.setGeometry(QRect(740, 10, 450, 250))
+        self.verticalLayoutWidget_3.setGeometry(QRect(740, 20, 350, 340))
         self.SFR = QVBoxLayout(self.verticalLayoutWidget_3)
         self.SFR.setObjectName(u"SFR")
         self.SFR.setContentsMargins(0, 0, 0, 0)
@@ -472,10 +496,6 @@ class Ui_MainWindow(object):
 
         self.Sichtbar.addLayout(self.S_5)
 
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.Sichtbar.addItem(self.verticalSpacer)
-
 
         self.SVS.addLayout(self.Sichtbar)
 
@@ -513,6 +533,21 @@ class Ui_MainWindow(object):
 
         self.Versteckt.addLayout(self.S_7)
 
+        self.S_10 = QHBoxLayout()
+        self.S_10.setObjectName(u"S_10")
+        self.VT_K = QLabel(self.verticalLayoutWidget_3)
+        self.VT_K.setObjectName(u"VT_K")
+
+        self.S_10.addWidget(self.VT_K)
+
+        self.VT_V = QLabel(self.verticalLayoutWidget_3)
+        self.VT_V.setObjectName(u"VT_V")
+        self.VT_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        self.S_10.addWidget(self.VT_V)
+
+        self.Versteckt.addLayout(self.S_10)
+
         self.S_8 = QHBoxLayout()
         self.S_8.setObjectName(u"S_8")
         self.WDTACTIVE = QCheckBox(self.verticalLayoutWidget_3)
@@ -536,18 +571,15 @@ class Ui_MainWindow(object):
 
         self.S_9.addWidget(self.WDT_V)
 
-
         self.Versteckt.addLayout(self.S_9)
-
-        self.verticalSpacer_2 = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.Versteckt.addItem(self.verticalSpacer_2)
-
 
         self.SVS.addLayout(self.Versteckt)
 
-        self.Stack = QVBoxLayout()
-        self.Stack.setSpacing(0)
+        self.verticalLayoutWidget_stack = QWidget(self.centralwidget)
+        self.verticalLayoutWidget_stack.setObjectName(u"verticalLayoutWidget_stack")
+        self.verticalLayoutWidget_stack.setGeometry(QRect(1170, 20, 100, 340))
+
+        self.Stack = QVBoxLayout(self.verticalLayoutWidget_stack)
         self.Stack.setObjectName(u"Stack")
         self.stack = QLabel(self.verticalLayoutWidget_3)
         self.stack.setObjectName(u"stack")
@@ -563,116 +595,195 @@ class Ui_MainWindow(object):
             self.stacklst[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.Stack.addWidget(self.stacklst[i])
 
-        self.SVS.addLayout(self.Stack)
-
+        self.Stack.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum))
 
         self.SFR.addLayout(self.SVS)
 
-        self.Status_REG = QGridLayout()
-        self.Status_REG.setObjectName(u"Status_REG")
-        self.DC_V = QLabel(self.verticalLayoutWidget_3)
-        self.DC_V.setObjectName(u"DC_V")
-        self.DC_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.statusstack = QVBoxLayout()
+        self.statusstack.setSpacing(0)
 
-        self.Status_REG.addWidget(self.DC_V, 1, 6, 1, 1)
+        self.statusheader = QHBoxLayout()
 
         self.label_16 = QLabel(self.verticalLayoutWidget_3)
         self.label_16.setObjectName(u"label_16")
-        self.label_16.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.Status_REG.addWidget(self.label_16, 0, 7, 1, 1)
+        self.statusheader.addWidget(self.label_16)
 
         self.label_9 = QLabel(self.verticalLayoutWidget_3)
         self.label_9.setObjectName(u"label_9")
-        self.label_9.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.Status_REG.addWidget(self.label_9, 0, 3, 1, 1)
+        self.statusheader.addWidget(self.label_9)
 
         self.label_14 = QLabel(self.verticalLayoutWidget_3)
         self.label_14.setObjectName(u"label_14")
-        self.label_14.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.Status_REG.addWidget(self.label_14, 0, 5, 1, 1)
+        self.statusheader.addWidget(self.label_14)
 
         self.label_2 = QLabel(self.verticalLayoutWidget_3)
         self.label_2.setObjectName(u"label_2")
-        self.label_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.Status_REG.addWidget(self.label_2, 0, 0, 1, 1)
-
-        self.RP_V = QLabel(self.verticalLayoutWidget_3)
-        self.RP_V.setObjectName(u"RP_V")
-        self.RP_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.RP_V, 1, 1, 1, 1)
+        self.statusheader.addWidget(self.label_2)
 
         self.label_5 = QLabel(self.verticalLayoutWidget_3)
         self.label_5.setObjectName(u"label_5")
-        self.label_5.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.Status_REG.addWidget(self.label_5, 0, 2, 1, 1)
-
-        self.RP0_V = QLabel(self.verticalLayoutWidget_3)
-        self.RP0_V.setObjectName(u"RP0_V")
-        self.RP0_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.RP0_V, 1, 2, 1, 1)
-
-        self.Z_V = QLabel(self.verticalLayoutWidget_3)
-        self.Z_V.setObjectName(u"Z_V")
-        self.Z_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.Z_V, 1, 5, 1, 1)
-
-        self.C_V = QLabel(self.verticalLayoutWidget_3)
-        self.C_V.setObjectName(u"C_V")
-        self.C_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.C_V, 1, 7, 1, 1)
-
-        self.TO_V = QLabel(self.verticalLayoutWidget_3)
-        self.TO_V.setObjectName(u"TO_V")
-        self.TO_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.TO_V, 1, 3, 1, 1)
+        self.statusheader.addWidget(self.label_5)
 
         self.label_15 = QLabel(self.verticalLayoutWidget_3)
         self.label_15.setObjectName(u"label_15")
-        self.label_15.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.Status_REG.addWidget(self.label_15, 0, 6, 1, 1)
-
-        self.IRP_V = QLabel(self.verticalLayoutWidget_3)
-        self.IRP_V.setObjectName(u"IRP_V")
-        self.IRP_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.IRP_V, 1, 0, 1, 1)
-
-        self.PD_V = QLabel(self.verticalLayoutWidget_3)
-        self.PD_V.setObjectName(u"PD_V")
-        self.PD_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.PD_V, 1, 4, 1, 1)
+        self.statusheader.addWidget(self.label_15)
 
         self.label_13 = QLabel(self.verticalLayoutWidget_3)
         self.label_13.setObjectName(u"label_13")
-        self.label_13.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        self.Status_REG.addWidget(self.label_13, 0, 4, 1, 1)
+        self.statusheader.addWidget(self.label_13)
 
         self.label_3 = QLabel(self.verticalLayoutWidget_3)
         self.label_3.setObjectName(u"label_3")
-        self.label_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        self.Status_REG.addWidget(self.label_3, 0, 1, 1, 1)
+        self.statusheader.addWidget(self.label_3)
+
+        self.statusstack.addLayout(self.statusheader)
+
+        self.statusvalues = QHBoxLayout()
 
 
-        self.SFR.addLayout(self.Status_REG)
+        self.statuslst = [QLabel] * 8
+
+        for i in range(8):
+            self.statuslst[i] = QPushButton()
+            self.statuslst[i].setObjectName(u"status" + str(i))
+            self.statusvalues.addWidget(self.statuslst[i])
+            self.statusvalues.addItem(QSpacerItem(15, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+
+        self.statusstack.addLayout(self.statusvalues)
+
+        self.SFR.addLayout(self.statusstack)
+
+        self.optionstack = QVBoxLayout()
+        self.optionstack.setSpacing(0)
+
+        self.header = QHBoxLayout()
+        self.header.setObjectName(u"header")
+
+        self.option_k = QLabel()
+        self.header.addWidget(self.option_k)
+
+        self.option_v = QLabel()
+        self.header.addWidget(self.option_v)
+
+        self.headerspacer = QSpacerItem(220, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.header.addItem(self.headerspacer)
+
+        self.optionstack.addLayout(self.header)
+
+        self.optionrowheaders = QHBoxLayout()
+
+        self.rbp = QLabel()
+        self.optionrowheaders.addWidget(self.rbp)
+
+        self.IntEdg = QLabel()
+        self.optionrowheaders.addWidget(self.IntEdg)
+
+        self.TOCS = QLabel()
+        self.optionrowheaders.addWidget(self.TOCS)
+
+        self.TOSE = QLabel()
+        self.optionrowheaders.addWidget(self.TOSE)
+
+        self.PSA = QLabel()
+        self.optionrowheaders.addWidget(self.PSA)
+
+        self.PS2 = QLabel()
+        self.optionrowheaders.addWidget(self.PS2)
+
+        self.PS1 = QLabel()
+        self.optionrowheaders.addWidget(self.PS1)
+
+        self.PS0 = QLabel()
+        self.optionrowheaders.addWidget(self.PS0)
+
+        self.optionstack.addLayout(self.optionrowheaders)
+
+        self.optionvalues = QHBoxLayout()
+
+        self.optionlst = [QLabel] * 8
+
+        for i in range(8):
+            self.optionlst[i] = QPushButton()
+            self.optionlst[i].setObjectName(u"status" + str(i))
+            self.optionvalues.addWidget(self.optionlst[i])
+            self.optionvalues.addItem(QSpacerItem(15, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+
+        self.optionstack.addLayout(self.optionvalues)
+
+
+        self.SFR.addLayout(self.optionstack)
+
+        self.intconstack = QVBoxLayout()
+        self.intconstack.setSpacing(0)
+
+        self.header2 = QHBoxLayout()
+        self.header2.setObjectName(u"header")
+
+        self.intcon_k = QLabel()
+        self.header2.addWidget(self.intcon_k)
+
+        self.intcon_v = QLabel()
+        self.header2.addWidget(self.intcon_v)
+
+        self.headerspacer2 = QSpacerItem(220, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.header2.addItem(self.headerspacer2)
+
+        self.intconstack.addLayout(self.header2)
+
+        self.intconrowheaders = QHBoxLayout()
+
+        self.gie = QLabel()
+        self.intconrowheaders.addWidget(self.gie)
+
+        self.pie = QLabel()
+        self.intconrowheaders.addWidget(self.pie)
+
+        self.toie = QLabel()
+        self.intconrowheaders.addWidget(self.toie)
+
+        self.inte = QLabel()
+        self.intconrowheaders.addWidget(self.inte)
+
+        self.rbie = QLabel()
+        self.intconrowheaders.addWidget(self.rbie)
+
+        self.toif = QLabel()
+        self.intconrowheaders.addWidget(self.toif)
+
+        self.intf = QLabel()
+        self.intconrowheaders.addWidget(self.intf)
+
+        self.rbif = QLabel()
+        self.intconrowheaders.addWidget(self.rbif)
+
+        self.intconstack.addLayout(self.intconrowheaders)
+
+        self.intconvalues = QHBoxLayout()
+
+        self.intconlst = [QLabel] * 8
+
+        for i in range(8):
+            self.intconlst[i] = QPushButton()
+            self.intconlst[i].setObjectName(u"status" + str(i))
+            self.intconvalues.addWidget(self.intconlst[i])
+            self.intconvalues.addItem(QSpacerItem(15, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
+
+        self.intconstack.addLayout(self.intconvalues)
+
+        self.SFR.addLayout(self.intconstack)
+
 
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
         self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(680, 270, 490, 90))
-        self.EXECINFOS = QHBoxLayout(self.horizontalLayoutWidget)
+        self.horizontalLayoutWidget.setGeometry(QRect(1170, 380, 100, 380))
+        self.EXECINFOS = QVBoxLayout(self.horizontalLayoutWidget)
         self.EXECINFOS.setObjectName(u"EXECINFOS")
         self.EXECINFOS.setContentsMargins(0, 0, 0, 0)
         self.QUARTTIME = QVBoxLayout()
@@ -728,47 +839,46 @@ class Ui_MainWindow(object):
 
         self.EXECINFOS.addLayout(self.EXECTIME)
 
-        self.CTRLBTNS = QGridLayout()
+        self.CTRLBTNS = QVBoxLayout()
         self.CTRLBTNS.setObjectName(u"CTRLBTNS")
-        self.CTRLBTNS.setHorizontalSpacing(-1)
         self.stepin = QPushButton(self.horizontalLayoutWidget)
         self.stepin.setObjectName(u"stepin")
 
-        self.CTRLBTNS.addWidget(self.stepin, 1, 1, 1, 1)
+        self.CTRLBTNS.addWidget(self.stepin)
 
         self.ignore = QPushButton(self.horizontalLayoutWidget)
         self.ignore.setObjectName(u"ignore")
 
-        self.CTRLBTNS.addWidget(self.ignore, 0, 1, 1, 1)
+        self.CTRLBTNS.addWidget(self.ignore)
 
         self.reset = QPushButton(self.horizontalLayoutWidget)
         self.reset.setObjectName(u"reset")
         self.reset.clicked.connect(self.onReset)
 
-        self.CTRLBTNS.addWidget(self.reset, 0, 0, 1, 1)
+        self.CTRLBTNS.addWidget(self.reset)
 
         self.go = QPushButton(self.horizontalLayoutWidget)
         self.go.setObjectName(u"go")
         self.go.clicked.connect(self.toggleThread)
 
-        self.CTRLBTNS.addWidget(self.go, 1, 0, 1, 1)
+        self.CTRLBTNS.addWidget(self.go)
 
         self.stepover = QPushButton(self.horizontalLayoutWidget)
         self.stepover.setObjectName(u"stepover")
 
-        self.CTRLBTNS.addWidget(self.stepover, 1, 2, 1, 1)
+        self.CTRLBTNS.addWidget(self.stepover)
 
         self.stepout = QPushButton(self.horizontalLayoutWidget)
         self.stepout.setObjectName(u"stepout")
 
-        self.CTRLBTNS.addWidget(self.stepout, 0, 2, 1, 1)
+        self.CTRLBTNS.addWidget(self.stepout)
 
 
         self.EXECINFOS.addLayout(self.CTRLBTNS)
 
         self.horizontalLayoutWidget_2 = QWidget(self.centralwidget)
         self.horizontalLayoutWidget_2.setObjectName(u"horizontalLayoutWidget_2")
-        self.horizontalLayoutWidget_2.setGeometry(QRect(350, 380, 821, 361))
+        self.horizontalLayoutWidget_2.setGeometry(QRect(350, 380, 800, 380))
         self.FILEFIELD = QHBoxLayout(self.horizontalLayoutWidget_2)
         self.FILEFIELD.setObjectName(u"FILEFIELD")
         self.FILEFIELD.setContentsMargins(0, 0, 0, 0)
@@ -812,6 +922,15 @@ class Ui_MainWindow(object):
         fileMenu.addAction(self.actionOpen)
         self.menubar.addMenu(fileMenu)
 
+        helpMenu = QMenu("&Help", MainWindow)
+
+        self.actionOpenDocumentation = QAction(QIcon.fromTheme("help-contents"), "Open documentation", MainWindow)
+        self.actionOpenDocumentation.setStatusTip("Öffne die Dokumentation")
+        self.actionOpenDocumentation.triggered.connect(self.open_documentation)
+
+        helpMenu.addAction(self.actionOpenDocumentation)
+        self.menubar.addMenu(helpMenu)
+
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(MainWindow)
         self.statusbar.setObjectName(u"statusbar")
@@ -847,7 +966,6 @@ class Ui_MainWindow(object):
             val += 8
         for v in self.memorycells:
             v.setText("")
-
         self.ra.setText(QCoreApplication.translate("MainWindow", u"RA", None))
         self.lineEdit_2.setText(QCoreApplication.translate("MainWindow", u"7", None))
         self.lineEdit_3.setText(QCoreApplication.translate("MainWindow", u"6", None))
@@ -892,26 +1010,22 @@ class Ui_MainWindow(object):
         self.PC_V.setText(QCoreApplication.translate("MainWindow", u"0001", None))
         self.Stackpointer_K.setText(QCoreApplication.translate("MainWindow", u"Stackpointer", None))
         self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        self.VT_K.setText(QCoreApplication.translate("MainWindow", u"VT", None))
+        self.VT_V.setText(QCoreApplication.translate("MainWindow", u"FF", None))
         self.WDTACTIVE.setText(QCoreApplication.translate("MainWindow", u"WDT aktiv", None))
         self.WDT_K.setText(QCoreApplication.translate("MainWindow", u"WDT", None))
         self.WDT_V.setText(QCoreApplication.translate("MainWindow", u"00", None))
         self.stack.setText(QCoreApplication.translate("MainWindow", u"Stack", None))
         for v in self.stacklst:
             v.setText(QCoreApplication.translate("MainWindow", u"0000", None))
-        self.DC_V.setText("")
+        for v in self.statuslst:
+            v.setText("")
         self.label_16.setText(QCoreApplication.translate("MainWindow", u"C", None))
         self.label_9.setText(QCoreApplication.translate("MainWindow", u"TO", None))
         self.label_14.setText(QCoreApplication.translate("MainWindow", u"Z", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"IRP", None))
-        self.RP_V.setText("")
         self.label_5.setText(QCoreApplication.translate("MainWindow", u"RP0", None))
-        self.RP0_V.setText("")
-        self.Z_V.setText("")
-        self.C_V.setText("")
-        self.TO_V.setText("")
         self.label_15.setText(QCoreApplication.translate("MainWindow", u"DC", None))
-        self.IRP_V.setText("")
-        self.PD_V.setText("")
         self.label_13.setText(QCoreApplication.translate("MainWindow", u"PD", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"RP", None))
         self.Freq_K.setText(QCoreApplication.translate("MainWindow", u"Quarzfrequenz", None))
@@ -919,7 +1033,7 @@ class Ui_MainWindow(object):
         self.label.setText(QCoreApplication.translate("MainWindow", u"1,000us", None))
         self.Time_K.setText(QCoreApplication.translate("MainWindow", u"Laufzeit", None))
         self.Time_V.setText(QCoreApplication.translate("MainWindow", u"0,00 us", None))
-        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"zur\u00fccksetzen", None))
+        self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Zur\u00fccksetzen", None))
         self.stepin.setText(QCoreApplication.translate("MainWindow", u"Step in", None))
         self.ignore.setText(QCoreApplication.translate("MainWindow", u"Ignore", None))
         self.reset.setText(QCoreApplication.translate("MainWindow", u"Reset", None))
@@ -927,10 +1041,38 @@ class Ui_MainWindow(object):
         self.stepover.setText(QCoreApplication.translate("MainWindow", u"Step over", None))
         self.stepout.setText(QCoreApplication.translate("MainWindow", u"Step out", None))
         self.checkBox.setText("")
+        self.option_k.setText(QCoreApplication.translate("MainWindow", u"Option", None))
+        self.option_v.setText(QCoreApplication.translate("MainWindow", u"FF", None))
+
+        self.rbp.setText(QCoreApplication.translate("MainWindow", u"RBP", None))
+        self.IntEdg.setText(QCoreApplication.translate("MainWindow", u"IntEdg", None))
+        self.TOCS.setText(QCoreApplication.translate("MainWindow", u"TOCS", None))
+        self.TOSE.setText(QCoreApplication.translate("MainWindow", u"TOSE", None))
+        self.PSA.setText(QCoreApplication.translate("MainWindow", u"PSA", None))
+        self.PS2.setText(QCoreApplication.translate("MainWindow", u"PS2", None))
+        self.PS1.setText(QCoreApplication.translate("MainWindow", u"PS1", None))
+        self.PS0.setText(QCoreApplication.translate("MainWindow", u"PS0", None))
+
+
+        self.intcon_k.setText(QCoreApplication.translate("MainWindow", u"INTCON", None))
+        self.intcon_v.setText(QCoreApplication.translate("MainWindow", u"00", None))
+        self.gie.setText(QCoreApplication.translate("MainWindow", u"GIE", None))
+        self.pie.setText(QCoreApplication.translate("MainWindow", u"PIE", None))
+        self.toie.setText(QCoreApplication.translate("MainWindow", u"T0IE", None))
+        self.inte.setText(QCoreApplication.translate("MainWindow", u"INTE", None))
+        self.rbie.setText(QCoreApplication.translate("MainWindow", u"RBIE", None))
+        self.toif.setText(QCoreApplication.translate("MainWindow", u"T0IF", None))
+        self.intf.setText(QCoreApplication.translate("MainWindow", u"INTF", None))
+        self.rbif.setText(QCoreApplication.translate("MainWindow", u"RBIF", None))
+
 
 
         self.updateUI()
     # retranslateUi
+
+    def open_documentation(self):
+        doc_url = QUrl.fromLocalFile("/Users/leandergantert/Documents/Projekte/Python/PicSimulator/Dateien/Bewertungsschema_Simulator_DHBW_HSO_2024.pdf")
+        QDesktopServices.openUrl(doc_url)
 
     def updateUI(self):
         memory = self.cpu.getMemInHex()
