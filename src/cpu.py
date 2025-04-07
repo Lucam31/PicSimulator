@@ -109,12 +109,13 @@ class CPU:
                 case 'btfss':
                     if self.dMemory.getBit(inst[1], inst[2]): self.dMemory.incPCL()
                 # clrwdt, retfie
-            self.dMemory.writeRegister(0x01, int(self.timer/4))
+            # self.dMemory.writeRegister(0x01, int(self.timer/4))
             print("W: " + hex(self.dMemory.getW()))
             print("Wert1: " + hex(self.dMemory.readRegister(12)))
             print("Wert2: " + hex(self.dMemory.readRegister(13)))
             # print("FSR: " + hex(self.dMemory.readRegister(4)))
             print("")
+            self.gui.updateUI()
 
         keep = self.dMemory.getW()
         print("W: " + hex(keep))
@@ -127,7 +128,7 @@ class CPU:
         hexMem = self.dMemory.memory[0] + self.dMemory.memory[1]
         for i in range(len(hexMem)):
             string = ("".join([str(x) for x in hexMem[i]]))
-            hexMem[i] = hex(int(string, 2))
+            hexMem[i] = int(string, 2)
         return hexMem
     
     def getFile(self):
