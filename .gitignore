@@ -22,7 +22,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
-.DS_Store
+.DS_STORE
+.idea
+.idea/
 
 
 # Environments
