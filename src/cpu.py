@@ -137,6 +137,5 @@ class CPU:
 
 if __name__ == "__main__":
     test = CPU()
-    # test.load_program()
-    # test.execute()
-    print(test.getMemInHex())
+    test.load_program()
+    test.execute()
