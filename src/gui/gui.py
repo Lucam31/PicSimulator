@@ -1022,6 +1022,7 @@ class Ui_MainWindow(object):
         self.stepover.setText(QCoreApplication.translate("MainWindow", u"Step over", None))
         self.stepout.setText(QCoreApplication.translate("MainWindow", u"Step out", None))
         self.checkBox.setText("")
+        
         self.option_k.setText(QCoreApplication.translate("MainWindow", u"Option", None))
         self.option_v.setText(QCoreApplication.translate("MainWindow", u"FF", None))
 
