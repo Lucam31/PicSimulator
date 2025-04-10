@@ -16,4 +16,5 @@ class MainWindow(QMainWindow):
 
     def closeEvent(self, event):
             self.ui.cpu.stopThread = True
+            self.ui.cpuThread.quit()
             event.accept()

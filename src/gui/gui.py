@@ -7,7 +7,7 @@ from cpu import CPU
 
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
                             QMetaObject, QObject, QPoint, QRect,
-                            QSize, QTime, QUrl, Qt, Slot, SLOT, QTimer)
+                            QSize, QTime, QUrl, Qt, Slot, SLOT, QTimer, Q_ARG, QGenericArgument)
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
                            QFont, QFontDatabase, QGradient, QIcon,
                            QImage, QKeySequence, QLinearGradient, QPainter,
@@ -36,7 +36,13 @@ class LEDWidget(QWidget):
         painter.setPen(Qt.NoPen)
         painter.drawEllipse(0, 0, self.width(), self.height())
 
-class Ui_MainWindow(object):
+
+
+
+from PySide6.QtCore import QThread, Slot
+
+
+class Ui_MainWindow(QObject):
     @Slot()
     def on_finished(self) -> None:
         for path in self.dialog.selectedFiles():
@@ -47,17 +53,63 @@ class Ui_MainWindow(object):
     def onReset(self) -> None:
         self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
         self.cpu.reset()
+        self.cpu.pauseThread = True
+    @Slot()
+    def onCPUFinished(self):
+        print("CPU execution finished.")
+        self.cpuThread.quit()
+        self.cpuThread.wait()
     @Slot()
     def toggleThread(self) -> None:
+        if not self.cpu.ready: return
         if self.go.text() == "Go":
             self.go.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
             self.cpu.pauseThread = False
+            self.stepin.setDisabled(True)
+            self.stepover.setDisabled(True)
         else:
             self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
             self.cpu.pauseThread = True
+            self.stepin.setDisabled(False)
+            self.stepover.setDisabled(False)
+    
+    @Slot()
+    def pinClicked(self, port, pin):
+        if port == 'a' and 0 <= pin < len(self.pinalst) and self.pinalst[pin] is not None:
+            val = int(self.pinalst[pin].text()) ^ 0x01
+            if pin == 3:
+                self.cpu.extClk()
+            self.pinalst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
+        elif port == 'b' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
+            val = int(self.pinblst[pin].text()) ^ 0x01
+            self.pinblst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
+        
+    @Slot(int)
+    def updateUI(self, data):
+        QMetaObject.invokeMethod(self, "_updateUI", Qt.QueuedConnection, Q_ARG(int, data))
+
+    @Slot(int)
+    def _updateUI(self, data):
+        # memory = data["memory"]
+        memory = self.cpu.getMemInHex()
+        for i in range(len(memory)):
+            self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
+        # self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(data["wreg"], '02X'), None))
+        # self.Time_V.setText(QCoreApplication.translate("MainWindow", str(data["clock"]) + " us", None))
+        self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(data, '02X'), None))
+        self.Time_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.clock) + " us", None))
+
     def setupUi(self, MainWindow):
-        self.cpu = CPU(self)
-        self.cpuThread = threading.Thread(target=self.cpu.execute)
+        self.cpu = CPU(True)
+        self.cpuThread = QThread()  # Create a QThread instance
+        self.cpu.moveToThread(self.cpuThread)  # Move CPU to the thread
+
+        # Connect signals
+        self.cpu.update_signal.connect(self.updateUI)
+        self.cpu.finished_signal.connect(self.onCPUFinished)
+        self.cpuThread.started.connect(self.cpu.execute)
+
+
         # cpu.load_program()
         # cpu.execute()
         if not MainWindow.objectName():
@@ -180,61 +232,14 @@ class Ui_MainWindow(object):
 
         self.RA.addWidget(self.ra)
 
-        self.lineEdit_2 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_2.setObjectName(u"lineEdit_2")
-        self.lineEdit_2.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_2.setReadOnly(True)
+        self.lineEditsA = []
+        for i in range(8):
+            self.lineEditsA.append(QLineEdit(self.verticalLayoutWidget_2))
+            self.lineEditsA[i].setObjectName(u"lineEdit_"+str(2+i))
+            self.lineEditsA[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.lineEditsA[i].setReadOnly(True)
 
-        self.RA.addWidget(self.lineEdit_2)
-
-        self.lineEdit_3 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_3.setObjectName(u"lineEdit_3")
-        self.lineEdit_3.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_3.setReadOnly(True)
-
-        self.RA.addWidget(self.lineEdit_3)
-
-        self.lineEdit_4 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_4.setObjectName(u"lineEdit_4")
-        self.lineEdit_4.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_4.setReadOnly(True)
-
-        self.RA.addWidget(self.lineEdit_4)
-
-        self.lineEdit_5 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_5.setObjectName(u"lineEdit_5")
-        self.lineEdit_5.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_5.setReadOnly(True)
-
-        self.RA.addWidget(self.lineEdit_5)
-
-        self.lineEdit_6 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_6.setObjectName(u"lineEdit_6")
-        self.lineEdit_6.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_6.setReadOnly(True)
-
-        self.RA.addWidget(self.lineEdit_6)
-
-        self.lineEdit_7 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_7.setObjectName(u"lineEdit_7")
-        self.lineEdit_7.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_7.setReadOnly(True)
-
-        self.RA.addWidget(self.lineEdit_7)
-
-        self.lineEdit_8 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_8.setObjectName(u"lineEdit_8")
-        self.lineEdit_8.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_8.setReadOnly(True)
-
-        self.RA.addWidget(self.lineEdit_8)
-
-        self.lineEdit_9 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_9.setObjectName(u"lineEdit_9")
-        self.lineEdit_9.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_9.setReadOnly(True)
-
-        self.RA.addWidget(self.lineEdit_9)
+            self.RA.addWidget(self.lineEditsA[i])
 
         self.PINS.addLayout(self.RA)
 
@@ -248,10 +253,10 @@ class Ui_MainWindow(object):
 
         self.TrisA.addWidget(self.trisa)
 
-        self.trisalst = [QLineEdit] * 8
+        self.trisalst = []
 
         for i in range(8):
-            self.trisalst[i] = QLineEdit(self.verticalLayoutWidget_2)
+            self.trisalst.append(QLineEdit(self.verticalLayoutWidget_2))
             self.trisalst[i].setObjectName(u"trisa" + str(i))
             self.trisalst[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.trisalst[i].setReadOnly(True)
@@ -269,11 +274,11 @@ class Ui_MainWindow(object):
 
         self.PinA.addWidget(self.pina)
 
-        self.pinalst = [QPushButton] * 8
-
+        self.pinalst = []
         for i in range(8):
-            self.pinalst[i] = QPushButton(self.verticalLayoutWidget_2)
+            self.pinalst.append(QPushButton(self.verticalLayoutWidget_2))
             self.pinalst[i].setObjectName(u"pina" + str(i))
+            self.pinalst[i].clicked.connect(lambda _, pin=i: self.pinClicked('a', pin))
             self.PinA.addWidget(self.pinalst[i])
 
         self.PINS.addLayout(self.PinA)
@@ -295,61 +300,14 @@ class Ui_MainWindow(object):
 
         self.RB.addWidget(self.rb)
 
-        self.lineEdit_10 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_10.setObjectName(u"lineEdit_10")
-        self.lineEdit_10.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_10.setReadOnly(True)
+        self.lineEditsB = []
+        for i in range(8):
+            self.lineEditsB.append(QLineEdit(self.verticalLayoutWidget_2))
+            self.lineEditsB[i].setObjectName(u"lineEdit_1"+str(i))
+            self.lineEditsB[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.lineEditsB[i].setReadOnly(True)
 
-        self.RB.addWidget(self.lineEdit_10)
-
-        self.lineEdit_11 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_11.setObjectName(u"lineEdit_11")
-        self.lineEdit_11.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_11.setReadOnly(True)
-
-        self.RB.addWidget(self.lineEdit_11)
-
-        self.lineEdit_12 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_12.setObjectName(u"lineEdit_12")
-        self.lineEdit_12.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_12.setReadOnly(True)
-
-        self.RB.addWidget(self.lineEdit_12)
-
-        self.lineEdit_13 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_13.setObjectName(u"lineEdit_13")
-        self.lineEdit_13.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_13.setReadOnly(True)
-
-        self.RB.addWidget(self.lineEdit_13)
-
-        self.lineEdit_14 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_14.setObjectName(u"lineEdit_14")
-        self.lineEdit_14.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_14.setReadOnly(True)
-
-        self.RB.addWidget(self.lineEdit_14)
-
-        self.lineEdit_15 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_15.setObjectName(u"lineEdit_15")
-        self.lineEdit_15.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_15.setReadOnly(True)
-
-        self.RB.addWidget(self.lineEdit_15)
-
-        self.lineEdit_16 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_16.setObjectName(u"lineEdit_16")
-        self.lineEdit_16.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_16.setReadOnly(True)
-
-        self.RB.addWidget(self.lineEdit_16)
-
-        self.lineEdit_17 = QLineEdit(self.verticalLayoutWidget_2)
-        self.lineEdit_17.setObjectName(u"lineEdit_17")
-        self.lineEdit_17.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.lineEdit_17.setReadOnly(True)
-
-        self.RB.addWidget(self.lineEdit_17)
+            self.RB.addWidget(self.lineEditsB[i])
 
 
         self.PINS.addLayout(self.RB)
@@ -364,10 +322,10 @@ class Ui_MainWindow(object):
 
         self.TrisB.addWidget(self.trisb)
 
-        self.trisblst = [QLineEdit] * 8
+        self.trisblst = []
 
         for i in range(8):
-            self.trisblst[i] = QLineEdit(self.verticalLayoutWidget_2)
+            self.trisblst.append(QLineEdit(self.verticalLayoutWidget_2))
             self.trisblst[i].setObjectName(u"trisb" + str(i))
             self.trisblst[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.trisblst[i].setReadOnly(True)
@@ -384,12 +342,11 @@ class Ui_MainWindow(object):
         self.pinb.setReadOnly(True)
 
         self.PinB.addWidget(self.pinb)
-
-        self.pinblst = [QPushButton] * 8
-
+        self.pinblst = []
         for i in range(8):
-            self.pinblst[i] = QPushButton(self.verticalLayoutWidget_2)
+            self.pinblst.append(QPushButton(self.verticalLayoutWidget_2))
             self.pinblst[i].setObjectName(u"pinb" + str(i))
+            self.pinblst[i].clicked.connect(lambda _, pin=i: self.pinClicked('b', pin))
             self.PinB.addWidget(self.pinblst[i])
 
         self.PINS.addLayout(self.PinB)
@@ -400,11 +357,11 @@ class Ui_MainWindow(object):
         self.LEDS = QHBoxLayout(self.horizontalLayoutWidget_4)
         self.LEDS.setObjectName(u"LEDS")
 
-        self.ledslst = [LEDWidget] * 8
+        self.ledslst = [None] * 8
 
-        for i in range(8):
-            self.ledslst[i] = LEDWidget()
-            self.LEDS.addWidget(self.ledslst[i])
+        # for i in range(8):
+        #     self.ledslst[i] = LEDWidget()
+        #     self.LEDS.addWidget(self.ledslst[i])
 
         self.verticalLayoutWidget_3 = QWidget(self.centralwidget)
         self.verticalLayoutWidget_3.setObjectName(u"verticalLayoutWidget_3")
@@ -843,6 +800,7 @@ class Ui_MainWindow(object):
         self.CTRLBTNS.setObjectName(u"CTRLBTNS")
         self.stepin = QPushButton(self.horizontalLayoutWidget)
         self.stepin.setObjectName(u"stepin")
+        self.stepin.clicked.connect(self.cpu.stepIn)
 
         self.CTRLBTNS.addWidget(self.stepin)
 
@@ -865,6 +823,7 @@ class Ui_MainWindow(object):
 
         self.stepover = QPushButton(self.horizontalLayoutWidget)
         self.stepover.setObjectName(u"stepover")
+        self.stepover.clicked.connect(self.cpu.stepOver)
 
         self.CTRLBTNS.addWidget(self.stepover)
 
@@ -967,14 +926,8 @@ class Ui_MainWindow(object):
         for v in self.memorycells:
             v.setText("")
         self.ra.setText(QCoreApplication.translate("MainWindow", u"RA", None))
-        self.lineEdit_2.setText(QCoreApplication.translate("MainWindow", u"7", None))
-        self.lineEdit_3.setText(QCoreApplication.translate("MainWindow", u"6", None))
-        self.lineEdit_4.setText(QCoreApplication.translate("MainWindow", u"5", None))
-        self.lineEdit_5.setText(QCoreApplication.translate("MainWindow", u"4", None))
-        self.lineEdit_6.setText(QCoreApplication.translate("MainWindow", u"3", None))
-        self.lineEdit_7.setText(QCoreApplication.translate("MainWindow", u"2", None))
-        self.lineEdit_8.setText(QCoreApplication.translate("MainWindow", u"1", None))
-        self.lineEdit_9.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        for i in range(8):
+            self.lineEditsA[i].setText(QCoreApplication.translate("MainWindow", str(7-i), None))
         self.trisa.setText(QCoreApplication.translate("MainWindow", u"Tris", None))
         for v in self.trisalst:
             v.setText(QCoreApplication.translate("MainWindow", u"i", None))
@@ -982,14 +935,8 @@ class Ui_MainWindow(object):
         for v in self.pinalst:
             v.setText(QCoreApplication.translate("MainWindow", u"0", None))
         self.rb.setText(QCoreApplication.translate("MainWindow", u"RB", None))
-        self.lineEdit_10.setText(QCoreApplication.translate("MainWindow", u"7", None))
-        self.lineEdit_11.setText(QCoreApplication.translate("MainWindow", u"6", None))
-        self.lineEdit_12.setText(QCoreApplication.translate("MainWindow", u"5", None))
-        self.lineEdit_13.setText(QCoreApplication.translate("MainWindow", u"4", None))
-        self.lineEdit_14.setText(QCoreApplication.translate("MainWindow", u"3", None))
-        self.lineEdit_15.setText(QCoreApplication.translate("MainWindow", u"2", None))
-        self.lineEdit_16.setText(QCoreApplication.translate("MainWindow", u"1", None))
-        self.lineEdit_17.setText(QCoreApplication.translate("MainWindow", u"0", None))
+        for i in range(8):
+            self.lineEditsB[i].setText(QCoreApplication.translate("MainWindow", str(7-i), None))
         self.trisb.setText(QCoreApplication.translate("MainWindow", u"Tris", None))
         for v in self.trisblst:
             v.setText(QCoreApplication.translate("MainWindow", u"i", None))
@@ -1067,14 +1014,14 @@ class Ui_MainWindow(object):
 
 
 
-        self.updateUI()
+        self.updateIntern()
     # retranslateUi
 
     def open_documentation(self):
         doc_url = QUrl.fromLocalFile("/Users/leandergantert/Documents/Projekte/Python/PicSimulator/Dateien/Bewertungsschema_Simulator_DHBW_HSO_2024.pdf")
         QDesktopServices.openUrl(doc_url)
 
-    def updateUI(self):
+    def updateIntern(self):
         memory = self.cpu.getMemInHex()
         for i in range(len(memory)):
             self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))

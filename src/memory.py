@@ -142,7 +142,17 @@ class DataMemory:
 
     def getPrescaler(self):
         scaler = ("".join([str(x) for x in self.memory[1][0x01]]))
-        return (int(scaler[2]), int(scaler[4]), int(scaler, 2) & 0x07)
+        test = (int(scaler, 2) & 0x07)
+        if int(scaler[4]) == 0: 
+            test +=1
+        test = 2**(test)
+        return (int(scaler[2]), int(scaler[4]), test)
+    
+    def incTimer0(self):
+        value = int(("".join([str(x) for x in self.memory[0][1]])),2)
+        test = bin((value+1) & 0xFF)[2:]
+        string = ('0'*(8-len(test))) + test
+        self.memory[0][1] = [int(char) for char in string]
 
 
 class ProgramMemory:
