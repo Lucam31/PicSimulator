@@ -16,6 +16,7 @@ class FileReader:
             print(f"An error occurred: {e}")
             return []
         self.filter_lines()
+        return self.file
         
     def filter_lines(self) -> None:
         if self.file == None:

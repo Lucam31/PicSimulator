@@ -30,8 +30,9 @@ class CPU(QThread):
         
 
     def load_program(self, path=None):
-        self.fileReader.readFile(self.program_file if path == None else path)
+        keep = self.fileReader.readFile(self.program_file if path == None else path)
         self.ready = True
+        return keep
 
     def execute(self):
         if not self.ready: 
@@ -50,7 +51,7 @@ class CPU(QThread):
             print(inst)
             # self.dMemory.setPCL(self.dMemory.getPCL()+1)
             self.dMemory.incPCL()
-            if self.dMemory.getPCL() == len(self.pMemory.memory): 
+            if self.dMemory.getPCL() == len(self.pMemory.memory):
                 break
             if 'add' in inst[0] or 'sub' in inst[0] or 'and' in inst[0] or 'ior' in inst[0] or 'xor' in inst[0]:
                 self.alu.execute(inst)
