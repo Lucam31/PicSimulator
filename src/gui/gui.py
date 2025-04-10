@@ -46,6 +46,7 @@ class Ui_MainWindow(QObject):
     @Slot()
     def on_finished(self) -> None:
         for path in self.dialog.selectedFiles():
+            self.onReset()
             self.cpu.load_program(path)
             self.plainTextEdit.setPlainText(self.cpu.getFile())
         self.cpuThread.start()
@@ -78,12 +79,19 @@ class Ui_MainWindow(QObject):
         if port == 'a' and 0 <= pin < len(self.pinalst) and self.pinalst[pin] is not None:
             val = int(self.pinalst[pin].text()) ^ 0x01
             if pin == 3:
-                self.cpu.extClk()
+                self.cpu.extClk(val)
             self.pinalst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
         elif port == 'b' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
             val = int(self.pinblst[pin].text()) ^ 0x01
             self.pinblst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
         
+    @Slot()
+    def stepOver(self):
+        self.cpu.stepOver()
+    @Slot()
+    def stepIn(self):
+        self.cpu.stepIn()
+
     @Slot(int)
     def updateUI(self, data):
         QMetaObject.invokeMethod(self, "_updateUI", Qt.QueuedConnection, Q_ARG(int, data))
@@ -94,10 +102,20 @@ class Ui_MainWindow(QObject):
         memory = self.cpu.getMemInHex()
         for i in range(len(memory)):
             self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
-        # self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(data["wreg"], '02X'), None))
-        # self.Time_V.setText(QCoreApplication.translate("MainWindow", str(data["clock"]) + " us", None))
         self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(data, '02X'), None))
         self.Time_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.clock) + " us", None))
+        stackContent = self.cpu.getStack()
+        for i in range(8 - len(stackContent)): stackContent.append(0)
+        for i in range(len(stackContent)):
+            self.stacklst[7-i].setText(QCoreApplication.translate("MainWindow", f'{stackContent[i]:04}', None))
+        self.VT_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getPrescaler()[2]), None))
+        fsr, pcl, pclath, status, stackP = self.cpu.getUiInfo()
+        self.FSR_V.setText(QCoreApplication.translate("MainWindow", f'{fsr:02}', None))
+        self.PCL_V.setText(QCoreApplication.translate("MainWindow", f'{pcl:02}', None))
+        self.PCLATH_V.setText(QCoreApplication.translate("MainWindow", f'{pclath:02}', None))
+        self.Status_V.setText(QCoreApplication.translate("MainWindow", f'{status:02}', None))
+        self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{pcl:02}', None))
+        self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", f'{stackP:02}', None))
 
     def setupUi(self, MainWindow):
         self.cpu = CPU(True)
@@ -801,7 +819,7 @@ class Ui_MainWindow(QObject):
         self.CTRLBTNS.setObjectName(u"CTRLBTNS")
         self.stepin = QPushButton(self.horizontalLayoutWidget)
         self.stepin.setObjectName(u"stepin")
-        self.stepin.clicked.connect(self.cpu.stepIn)
+        self.stepin.clicked.connect(self.stepIn)
 
         self.CTRLBTNS.addWidget(self.stepin)
 
@@ -824,7 +842,7 @@ class Ui_MainWindow(QObject):
 
         self.stepover = QPushButton(self.horizontalLayoutWidget)
         self.stepover.setObjectName(u"stepover")
-        self.stepover.clicked.connect(self.cpu.stepOver)
+        self.stepover.clicked.connect(self.stepOver)
 
         self.CTRLBTNS.addWidget(self.stepover)
 
@@ -871,7 +889,7 @@ class Ui_MainWindow(QObject):
         self.dialog.setFileMode(QFileDialog.ExistingFiles)
         self.dialog.setNameFilter("*.LST *.lst")
         self.dialog.setWindowTitle('Open File...')
-        self.dialog.finished.connect(self.on_finished)
+        self.dialog.accepted.connect(self.on_finished)
 
 
         fileMenu = QMenu("&File", MainWindow)

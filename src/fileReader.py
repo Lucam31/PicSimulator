@@ -4,6 +4,7 @@ class FileReader:
     def __init__(self, memory):
         self.file = None
         self.memory = memory
+        self.codeNumbers = []
 
     def readFile(self, filePath):
         try:
@@ -16,8 +17,10 @@ class FileReader:
             print(f"An error occurred: {e}")
             return []
         self.filter_lines()
+        return self.file, self.codeNumbers # not used in gui yet
         
     def filter_lines(self) -> None:
+
         if self.file == None:
             raise Exception("No File was loaded!")
         filtered_lines = []
@@ -27,7 +30,9 @@ class FileReader:
         for i in range(len(filtered_lines)):
             if filtered_lines[k].isspace():
                 filtered_lines.pop(k)
-            else: k+=1
+            else: 
+                self.codeNumbers.append(i)
+                k+=1
         self.memory.write(filtered_lines)
         
         

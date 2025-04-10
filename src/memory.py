@@ -142,7 +142,7 @@ class DataMemory:
 
     def getPrescaler(self):
         scaler = ("".join([str(x) for x in self.memory[1][0x01]]))
-        test = (int(scaler, 2) & 0x07)
+        test:int = (int(scaler, 2) & 0x07)
         if int(scaler[4]) == 0: 
             test +=1
         test = 2**(test)
@@ -199,4 +199,7 @@ class Stack:
     
     def is_empty(self):
         return len(self.stack) == 0
+    
+    def get(self):
+        return self.stack.copy()
     

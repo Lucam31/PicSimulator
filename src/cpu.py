@@ -5,7 +5,7 @@ from alu import ALU
 import os
 from time import sleep
 
-from PySide6.QtCore import QObject, Signal, QThread
+from PySide6.QtCore import QObject, Signal, QThread, Slot
 
 class CPU(QThread):
     update_signal = Signal(int)  # Signal to notify the GUI to update
@@ -20,18 +20,20 @@ class CPU(QThread):
         self.decoder = Decoder()
         self.fileReader = FileReader(self.pMemory)
         self.alu = ALU(self.dMemory)
-        self.program_file = os.getcwd() + "/Testprogramme/TPicSim7.LST"
+        self.program_file = os.getcwd() + "/Testprogramme/TPicSim2.LST"
         self.ready = False
         self.stopThread = False
         self.pauseThread = True if gui else False
         self.clock, self.timer, self.flankeVal, self.flankeClock = 0, 0, 0, 0
         self.stepInVar, self.stepOverVar = False, False
         self.flanke = False
+        self.t0cs, self.psa, self.scaling = 1, 1, 16
         
 
     def load_program(self, path=None):
-        self.fileReader.readFile(self.program_file if path == None else path)
+        keep = self.fileReader.readFile(self.program_file if path == None else path)
         self.ready = True
+        return keep
 
     def execute(self):
         if not self.ready: 
@@ -169,8 +171,8 @@ class CPU(QThread):
             # print("FSR: " + hex(self.dMemory.readRegister(4)))
             print("")
             if self.guiSet: self.updateUI()
-            QThread.sleep(0.05)
-            # sleep(0.05)
+            # QThread.sleep(0.05)
+            sleep(0.005)
 
         keep = self.dMemory.getW()
         print("W: " + hex(keep))
@@ -205,19 +207,21 @@ class CPU(QThread):
         if self.ready:
             self.stepInVar = True
 
-    def extClk(self):
-        if self.psa or self.t0cs: return
+    def extClk(self, val):
+        if not self.t0cs: return
         t0se = self.dMemory.memory[1][0x01][3]
+        self.flankeVal = val
         if t0se == 1:
-            if self.flankeVal == 0:
+            if self.flankeVal == 1:
                 return
             #1 fallend, 0 steigend
         else:
-            if self.flankeVal == 1:
+            if self.flankeVal == 0:
                 return
         self.flankeClock += 1
-        if self.flankeClock%self.scaling == 0:
-            self.dMemory.incTimer0()
+        if not self.psa and self.flankeClock%self.scaling != 0:
+            return
+        self.dMemory.incTimer0()
 
     def updateUI(self):
         self.update_signal.emit(self.dMemory.getW())
@@ -228,7 +232,15 @@ class CPU(QThread):
         #         "memory": self.getMemInHex(),
         #         "pcl": self.dMemory.getPCL(),
         #     })
-
+    def getStack(self):
+        return self.stack.get()
+    
+    def getUiInfo(self):
+        return (self.dMemory.readRegister(4),#fsr
+            self.dMemory.getPCL(),#pcl
+            int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])),2),#pclath
+            self.dMemory.readRegister(3),#status
+            len(self.stack.stack))#stackp
 
 if __name__ == "__main__":
     test = CPU()
