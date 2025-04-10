@@ -13,10 +13,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
                            QImage, QKeySequence, QLinearGradient, QPainter,
                            QPalette, QPixmap, QRadialGradient, QTransform, QAction, QDesktopServices)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame,
-    QHBoxLayout, QLabel, QLayout, QLineEdit,
-    QMainWindow, QMenuBar, QPlainTextEdit, QPushButton,
-    QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout,
-    QWidget, QMenu, QFileDialog)
+                               QHBoxLayout, QLabel, QLayout, QLineEdit,
+                               QMainWindow, QMenuBar, QPlainTextEdit, QPushButton,
+                               QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout,
+                               QWidget, QMenu, QFileDialog, QScrollArea)
 
 class LEDWidget(QWidget):
     def __init__(self, parent=None):
@@ -47,8 +47,8 @@ class Ui_MainWindow(QObject):
     def on_finished(self) -> None:
         for path in self.dialog.selectedFiles():
             self.onReset()
-            self.cpu.load_program(path)
-            self.plainTextEdit.setPlainText(self.cpu.getFile())
+            fileLines = self.cpu.load_program(path) #fileLines, codenumbers
+            self.readFileToScrollArea(fileLines)
         self.cpuThread.start()
     @Slot()
     def onReset(self) -> None:
@@ -851,32 +851,20 @@ class Ui_MainWindow(QObject):
 
         self.CTRLBTNS.addWidget(self.stepout)
 
-
         self.EXECINFOS.addLayout(self.CTRLBTNS)
 
-        self.horizontalLayoutWidget_2 = QWidget(self.centralwidget)
-        self.horizontalLayoutWidget_2.setObjectName(u"horizontalLayoutWidget_2")
-        self.horizontalLayoutWidget_2.setGeometry(QRect(350, 380, 800, 380))
-        self.FILEFIELD = QHBoxLayout(self.horizontalLayoutWidget_2)
-        self.FILEFIELD.setObjectName(u"FILEFIELD")
-        self.FILEFIELD.setContentsMargins(0, 0, 0, 0)
-        self.verticalLayout_2 = QVBoxLayout()
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.checkBox = QCheckBox(self.horizontalLayoutWidget_2)
-        self.checkBox.setObjectName(u"checkBox")
 
-        self.verticalLayout_2.addWidget(self.checkBox)
+        self.Widget = QWidget(self.centralwidget)
+        self.Widget.setGeometry(350, 380, 800, 380)
 
+        self.scrollArea = QScrollArea(self.Widget)
+        self.scrollArea.setGeometry(0, 0, 800, 380)
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setContentsMargins(0, 0, 0, 0)
 
-        self.FILEFIELD.addLayout(self.verticalLayout_2)
+        self.contentWidget = QWidget()
 
-        self.plainTextEdit = QPlainTextEdit(self.horizontalLayoutWidget_2)
-        self.plainTextEdit.setObjectName(u"plainTextEdit")
-        # font3 = QFont("Consolas")
-        # font3.setFamily('Monospace')
-        # self.plainTextEdit.setFont(font3)
-
-        self.FILEFIELD.addWidget(self.plainTextEdit)
+        self.scrollArea.setWidget(self.contentWidget)
 
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
@@ -1006,7 +994,6 @@ class Ui_MainWindow(QObject):
         self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
         self.stepover.setText(QCoreApplication.translate("MainWindow", u"Step over", None))
         self.stepout.setText(QCoreApplication.translate("MainWindow", u"Step out", None))
-        self.checkBox.setText("")
         
         self.option_k.setText(QCoreApplication.translate("MainWindow", u"Option", None))
         self.option_v.setText(QCoreApplication.translate("MainWindow", u"FF", None))
@@ -1047,3 +1034,32 @@ class Ui_MainWindow(QObject):
             self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
         self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.getW(), '02X'), None))
         self.Time_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.clock) + " us", None))
+
+    def readFileToScrollArea(self, lines: list):
+        self.FILEFIELD = QVBoxLayout(self.contentWidget)
+        self.FILEFIELD.setSpacing(0) 
+        self.FILEFIELD.setContentsMargins(0, 0, 0, 0) 
+
+        self.breakChecklst = []
+        self.fileLineslst = []
+
+        for line in lines:
+            linelayout = QHBoxLayout()
+            linelayout.setSpacing(10)
+            linelayout.setContentsMargins(0, 0, 0, 0)
+
+            checkbox = QCheckBox()
+            checkbox.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
+            lineedit = QLineEdit()
+            lineedit.setReadOnly(True)
+            lineedit.setText(line)
+            lineedit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+
+            self.breakChecklst.append(checkbox)
+            self.fileLineslst.append(lineedit)
+
+            linelayout.addWidget(checkbox)
+            linelayout.addWidget(lineedit)
+
+            self.FILEFIELD.addLayout(linelayout)
