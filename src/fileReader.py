@@ -31,6 +31,18 @@ class FileReader:
         self.memory.write(filtered_lines)
         
         
+    def read_and_filter_lines(self, file_path):
+        filtered_lines = []
+        for line in self.file:
+            filtered_lines.append(line[5:9])
+        k = 0
+        for i in range(len(filtered_lines)):
+            if filtered_lines[k].isspace():
+                filtered_lines.pop(k)
+            else: k+=1
+        self.memory.write(filtered_lines)
+        
+        
     def getFile(self):
         return '\n'.join(self.file)
 

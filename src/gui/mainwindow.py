@@ -1,4 +1,5 @@
 from PySide6.QtWidgets import QMainWindow
+import sys
 
 # Important:
 # You need to run the following command to generate the gui.py file
@@ -12,3 +13,8 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowTitle("PIC-SIMU by Luca Mueller & Leander Gantert")
+
+    def closeEvent(self, event):
+            self.ui.cpu.stopThread = True
+            self.ui.cpuThread.quit()
+            event.accept()

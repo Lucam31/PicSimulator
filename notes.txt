@@ -36,3 +36,9 @@ bei schreiben eines ergebnisses einer operation in das file register prüfen ob 
 dann shit mit pclath machen
 
 wenn port pins verändert werden direkt aktualisieren (oberfläche?) oder wenn auf oberfläche etwas geändert wird im code aktualisieren
+
+
+t0cs 0 befehlstakt, 1 externer Takt
+psa 0 tmr0 vt, 1 wdt vt
+
+wenn vt neu beschrieben wdt resetten
