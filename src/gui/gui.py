@@ -629,6 +629,7 @@ class Ui_MainWindow(QObject):
         self.option_v = QLabel()
         self.header.addWidget(self.option_v)
 
+
         self.headerspacer = QSpacerItem(220, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         self.header.addItem(self.headerspacer)
 
@@ -988,6 +989,7 @@ class Ui_MainWindow(QObject):
         self.stepover.setText(QCoreApplication.translate("MainWindow", u"Step over", None))
         self.stepout.setText(QCoreApplication.translate("MainWindow", u"Step out", None))
         self.checkBox.setText("")
+        
         self.option_k.setText(QCoreApplication.translate("MainWindow", u"Option", None))
         self.option_v.setText(QCoreApplication.translate("MainWindow", u"FF", None))
 
