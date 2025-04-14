@@ -20,7 +20,7 @@ class FileReader:
         return self.file, self.codeNumbers # not used in gui yet
         
     def filter_lines(self) -> None:
-
+        self.codeNumbers = []
         if self.file == None:
             raise Exception("No File was loaded!")
         filtered_lines = []

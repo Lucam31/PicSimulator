@@ -47,9 +47,11 @@ class Ui_MainWindow(QObject):
     def on_finished(self) -> None:
         for path in self.dialog.selectedFiles():
             self.onReset()
-            fileLines = self.cpu.load_program(path) #fileLines, codenumbers
+            fileLines, self.codeNumbers = self.cpu.load_program(path) #fileLines, codenumbers
             self.readFileToScrollArea(fileLines)
+        self.cpuThread.quit()
         self.cpuThread.start()
+        self.updateIntern()
     @Slot()
     def onReset(self) -> None:
         self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
@@ -109,13 +111,23 @@ class Ui_MainWindow(QObject):
         for i in range(len(stackContent)):
             self.stacklst[7-i].setText(QCoreApplication.translate("MainWindow", f'{stackContent[i]:04}', None))
         self.VT_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getPrescaler()[2]), None))
-        fsr, pcl, pclath, status, stackP = self.cpu.getUiInfo()
+        fsr, pcl, lastpcl, pclath, pc, status, stackP = self.cpu.getUiInfo()
         self.FSR_V.setText(QCoreApplication.translate("MainWindow", f'{fsr:02}', None))
         self.PCL_V.setText(QCoreApplication.translate("MainWindow", f'{pcl:02}', None))
         self.PCLATH_V.setText(QCoreApplication.translate("MainWindow", f'{pclath:02}', None))
         self.Status_V.setText(QCoreApplication.translate("MainWindow", f'{status:02}', None))
-        self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{pcl:02}', None))
+        self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{pc:04}', None))
         self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", f'{stackP:02}', None))
+        try:
+            self.fileLineslst[self.codeNumbers[pc]].setStyleSheet("border: 1px solid red;")
+            self.fileLineslst[self.codeNumbers[lastpcl]].setStyleSheet("border: 1px solid None;")
+            # self.linelayout.ensureWidgetVisible(self.fileLineslst[self.codeNumbers[pcl]])
+            if self.breakChecklst[self.codeNumbers[pc]].isChecked():
+                self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
+                self.cpu.pauseThread = True
+                self.stepin.setDisabled(False)
+                self.stepover.setDisabled(False)
+        except: pass
 
     def setupUi(self, MainWindow):
         self.cpu = CPU(True)
@@ -126,6 +138,9 @@ class Ui_MainWindow(QObject):
         self.cpu.update_signal.connect(self.updateUI)
         self.cpu.finished_signal.connect(self.onCPUFinished)
         self.cpuThread.started.connect(self.cpu.execute)
+
+
+        self.codeNumbers = []
 
 
         # cpu.load_program()
@@ -864,6 +879,12 @@ class Ui_MainWindow(QObject):
 
         self.contentWidget = QWidget()
 
+
+        self.FILEFIELD = QVBoxLayout(self.contentWidget)
+        self.FILEFIELD.setSpacing(0) 
+        self.FILEFIELD.setContentsMargins(0, 0, 0, 0) 
+
+
         self.scrollArea.setWidget(self.contentWidget)
 
         MainWindow.setCentralWidget(self.centralwidget)
@@ -1029,24 +1050,27 @@ class Ui_MainWindow(QObject):
         QDesktopServices.openUrl(doc_url)
 
     def updateIntern(self):
-        memory = self.cpu.getMemInHex()
-        for i in range(len(memory)):
-            self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
-        self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.getW(), '02X'), None))
-        self.Time_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.clock) + " us", None))
+        # memory = self.cpu.getMemInHex()
+        # for i in range(len(memory)):
+        #     self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
+        # self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.getW(), '02X'), None))
+        # self.Time_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.clock) + " us", None))
+        QMetaObject.invokeMethod(self, "_updateUI", Qt.QueuedConnection, Q_ARG(int, 0))
 
     def readFileToScrollArea(self, lines: list):
-        self.FILEFIELD = QVBoxLayout(self.contentWidget)
-        self.FILEFIELD.setSpacing(0) 
-        self.FILEFIELD.setContentsMargins(0, 0, 0, 0) 
+        # try:
+        for i in reversed(range(self.FILEFIELD.count())):
+            self.FILEFIELD.removeItem(self.FILEFIELD.itemAt(i))
+        # except:
+        #     pass
 
         self.breakChecklst = []
         self.fileLineslst = []
 
         for line in lines:
-            linelayout = QHBoxLayout()
-            linelayout.setSpacing(10)
-            linelayout.setContentsMargins(0, 0, 0, 0)
+            self.linelayout = QHBoxLayout()
+            self.linelayout.setSpacing(10)
+            self.linelayout.setContentsMargins(0, 0, 0, 0)
 
             checkbox = QCheckBox()
             checkbox.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
@@ -1055,11 +1079,12 @@ class Ui_MainWindow(QObject):
             lineedit.setReadOnly(True)
             lineedit.setText(line)
             lineedit.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            lineedit.setStyleSheet("border: 1px solid None;")
 
             self.breakChecklst.append(checkbox)
             self.fileLineslst.append(lineedit)
 
-            linelayout.addWidget(checkbox)
-            linelayout.addWidget(lineedit)
+            self.linelayout.addWidget(checkbox)
+            self.linelayout.addWidget(lineedit)
 
-            self.FILEFIELD.addLayout(linelayout)
+            self.FILEFIELD.addLayout(self.linelayout)
