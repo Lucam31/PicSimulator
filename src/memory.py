@@ -123,6 +123,11 @@ class DataMemory:
     def getPCounter(self) -> int:
         return self.pCounter
     
+    def resetPC(self) -> None:
+        self.setPCounter(0)
+        self.setPCL(0)
+        self.setPCLATH(0)
+    
     def readRegister(self, register: int, bank=None) -> int:
         if register == 'w':
             return self.WREG

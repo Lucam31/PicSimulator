@@ -47,4 +47,8 @@ wenn vt neu beschrieben wdt resetten
 TODO:
 - WDT
 - interrupts
-- 
+- PORT/TRIS aktualisieren, wenn in code geändert
+- SFR, GPR richtig anzeigen
+
+
+4/Quarzfrequenz in MHz ergibt Dauer pro Takt in us

@@ -54,9 +54,15 @@ class Ui_MainWindow(QObject):
         self.updateIntern()
     @Slot()
     def onReset(self) -> None:
-        self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
+        try:
+            self.fileLineslst[self.codeNumbers[self.pc]].setStyleSheet("border: 1px solid None;")
+            self.fileLineslst[self.codeNumbers[self.lastpcl]].setStyleSheet("border: 1px solid None;")
+        except: pass
         self.cpu.reset()
+        self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
         self.cpu.pauseThread = True
+        self.stepin.setDisabled(False)
+        self.stepover.setDisabled(False)
     @Slot()
     def onCPUFinished(self):
         print("CPU execution finished.")
@@ -93,6 +99,12 @@ class Ui_MainWindow(QObject):
     @Slot()
     def stepIn(self):
         self.cpu.stepIn()
+    @Slot()
+    def onIgnore(self):
+        self.fileLineslst[self.codeNumbers[self.cpu.dMemory.getPCounter()]].setStyleSheet("border: 1px solid None;")
+        self.cpu.dMemory.incPCL()
+        self.cpu.dMemory.setPCounter()
+        self.cpu.updateUI()
 
     @Slot(int)
     def updateUI(self, data):
@@ -111,18 +123,21 @@ class Ui_MainWindow(QObject):
         for i in range(len(stackContent)):
             self.stacklst[7-i].setText(QCoreApplication.translate("MainWindow", f'{stackContent[i]:04}', None))
         self.VT_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getPrescaler()[2]), None))
-        fsr, pcl, lastpcl, pclath, pc, status, stackP = self.cpu.getUiInfo()
+        fsr, pcl, self.lastpcl, pclath, self.pc, status, stackP = self.cpu.getUiInfo()
         self.FSR_V.setText(QCoreApplication.translate("MainWindow", f'{fsr:02}', None))
         self.PCL_V.setText(QCoreApplication.translate("MainWindow", f'{pcl:02}', None))
         self.PCLATH_V.setText(QCoreApplication.translate("MainWindow", f'{pclath:02}', None))
         self.Status_V.setText(QCoreApplication.translate("MainWindow", f'{status:02}', None))
-        self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{pc:04}', None))
+        self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{self.pc:04}', None))
         self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", f'{stackP:02}', None))
         try:
-            self.fileLineslst[self.codeNumbers[pc]].setStyleSheet("border: 1px solid red;")
-            self.fileLineslst[self.codeNumbers[lastpcl]].setStyleSheet("border: 1px solid None;")
-            # self.linelayout.ensureWidgetVisible(self.fileLineslst[self.codeNumbers[pcl]])
-            if self.breakChecklst[self.codeNumbers[pc]].isChecked():
+            self.fileLineslst[self.codeNumbers[self.pc]].setStyleSheet("border: 1px solid red;")
+            if self.pc != self.lastpcl:
+                self.fileLineslst[self.codeNumbers[self.lastpcl]].setStyleSheet("border: 1px solid None;")
+            widget = self.fileLineslst[self.codeNumbers[self.pc]-5]
+            scroll_bar = self.scrollArea.verticalScrollBar()
+            scroll_bar.setValue(widget.y())
+            if self.breakChecklst[self.codeNumbers[self.pc]].isChecked():
                 self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
                 self.cpu.pauseThread = True
                 self.stepin.setDisabled(False)
@@ -840,6 +855,7 @@ class Ui_MainWindow(QObject):
 
         self.ignore = QPushButton(self.horizontalLayoutWidget)
         self.ignore.setObjectName(u"ignore")
+        self.ignore.clicked.connect(self.onIgnore)
 
         self.CTRLBTNS.addWidget(self.ignore)
 

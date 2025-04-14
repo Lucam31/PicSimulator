@@ -56,8 +56,6 @@ class CPU(QThread):
             self.lastPC = self.dMemory.getPCounter()
             self.dMemory.incPCL()
             self.dMemory.setPCounter()
-            if self.dMemory.getPCounter() == len(self.pMemory.memory):
-                break
             if 'add' in inst[0] or 'sub' in inst[0] or 'and' in inst[0] or 'ior' in inst[0] or 'xor' in inst[0]:
                 self.alu.execute(inst)
             match inst[0]:
@@ -71,7 +69,7 @@ class CPU(QThread):
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
                     self.dMemory.setBit(0x03, 2, 1 if val == 0 else 0)
                 case 'goto':
-                    if self.dMemory.getPCounter() == inst[1]: break
+                    # if self.dMemory.getPCounter() == inst[1]: break
                     pclath = int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])[3:5]),2) << 3
                     val = bin(inst[1])[2:]
                     val = '0'*(11-len(val)) + val
@@ -177,6 +175,8 @@ class CPU(QThread):
                         self.clock += 1
                         self.timer += 1
                 # clrwdt, retfie
+            if self.dMemory.getPCounter() == len(self.pMemory.memory):
+                break
             # increase timer and counter
             self.clock += 1
             self.timer += 1
@@ -194,7 +194,7 @@ class CPU(QThread):
             print("")
             if self.guiSet: self.updateUI()
             # QThread.sleep(0.05)
-            sleep(0.005)
+            sleep(0.05)
 
         keep = self.dMemory.getW()
         print("W: " + hex(keep))
@@ -219,6 +219,7 @@ class CPU(QThread):
         self.dMemory.initialize()
         self.stack.stack = []
         self.pauseThread = True
+        self.dMemory.resetPC()
         self.updateUI()
 
     def stepOver(self):
