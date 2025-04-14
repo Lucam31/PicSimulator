@@ -5,7 +5,7 @@ from alu import ALU
 import os
 from time import sleep
 
-from PySide6.QtCore import QObject, Signal, QThread
+from PySide6.QtCore import QObject, Signal, QThread, Slot
 
 class CPU(QThread):
     update_signal = Signal(int)  # Signal to notify the GUI to update
@@ -20,13 +20,16 @@ class CPU(QThread):
         self.decoder = Decoder()
         self.fileReader = FileReader(self.pMemory)
         self.alu = ALU(self.dMemory)
-        self.program_file = os.getcwd() + "/Testprogramme/TPicSim7.LST"
+        self.program_file = os.getcwd() + "/Testprogramme/TPicSim2.LST"
         self.ready = False
         self.stopThread = False
         self.pauseThread = True if gui else False
         self.clock, self.timer, self.flankeVal, self.flankeClock = 0, 0, 0, 0
         self.stepInVar, self.stepOverVar = False, False
         self.flanke = False
+        self.t0cs, self.psa, self.scaling = 1, 1, 16
+        self.lastPC = 0
+        # self.initialUpdate = True
         
 
     def load_program(self, path=None):
@@ -38,6 +41,7 @@ class CPU(QThread):
         if not self.ready: 
             return
         while(1):
+            # if self.initialUpdate: self.updateUI()
             while(self.pauseThread):
                 if(self.stopThread): break
                 if self.stepInVar or self.stepOverVar: 
@@ -46,12 +50,13 @@ class CPU(QThread):
                     break
             if(self.stopThread): 
                 break
-            cmd = self.pMemory.read(self.dMemory.getPCL())
+            cmd = self.pMemory.read(self.dMemory.getPCounter())
             inst = self.decoder.decode('0x'+str(cmd))
             print(inst)
-            # self.dMemory.setPCL(self.dMemory.getPCL()+1)
+            self.lastPC = self.dMemory.getPCounter()
             self.dMemory.incPCL()
-            if self.dMemory.getPCL() == len(self.pMemory.memory):
+            self.dMemory.setPCounter()
+            if self.dMemory.getPCounter() == len(self.pMemory.memory):
                 break
             if 'add' in inst[0] or 'sub' in inst[0] or 'and' in inst[0] or 'ior' in inst[0] or 'xor' in inst[0]:
                 self.alu.execute(inst)
@@ -66,8 +71,16 @@ class CPU(QThread):
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
                     self.dMemory.setBit(0x03, 2, 1 if val == 0 else 0)
                 case 'goto':
-                    if self.dMemory.getPCL() == inst[1]: break
-                    self.dMemory.setPCL(inst[1])
+                    if self.dMemory.getPCounter() == inst[1]: break
+                    pclath = int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])[3:5]),2) << 3
+                    val = bin(inst[1])[2:]
+                    val = '0'*(11-len(val)) + val
+                    pclath = pclath + int(val[:3],2)
+                    pcl = int(val[3:],2)
+                    self.dMemory.setPCL(pcl)
+                    self.dMemory.setPCLATH(pclath)
+                    pc = (pclath << 8) + pcl
+                    self.dMemory.setPCounter(pc)
                     self.clock += 1
                     self.timer += 1
                 case 'sleep':
@@ -75,19 +88,29 @@ class CPU(QThread):
                     self.timer += 1
                     # fehlt noch was
                 case 'call':
-                    self.stack.push(self.dMemory.getPCL()+1)
-                    self.dMemory.setPCL(inst[1])
+                    self.stack.push(self.dMemory.getPCounter())
+                    pclath = int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])[3:5]),2) << 3
+                    val = bin(inst[1])[2:]
+                    val = '0'*(11-len(val)) + val
+                    pclath = pclath + int(val[:3],2)
+                    pcl = int(val[3:],2)
+                    self.dMemory.setPCL(pcl)
+                    self.dMemory.setPCLATH(pclath)
+                    pc = (pclath << 8) + pcl
+                    self.dMemory.setPCounter(pc)
                     self.clock += 1
                     self.timer += 1
                 case 'ret':
-                    self.dMemory.setPCL(self.stack.pop())
+                    self.dMemory.setPCounter(self.stack.pop())
+                    self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
                     self.clock += 1
                     self.timer += 1
                 case 'nop':
                     pass
                 case 'retlw':
                     self.dMemory.writeRegister('w', inst[1])
-                    self.dMemory.setPCL(self.stack.pop())
+                    self.dMemory.setPCounter(self.stack.pop())
+                    self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
                     self.clock += 1
                     self.timer += 1
                 case 'retfie':
@@ -170,8 +193,8 @@ class CPU(QThread):
             # print("FSR: " + hex(self.dMemory.readRegister(4)))
             print("")
             if self.guiSet: self.updateUI()
-            QThread.sleep(0.05)
-            # sleep(0.05)
+            # QThread.sleep(0.05)
+            sleep(0.005)
 
         keep = self.dMemory.getW()
         print("W: " + hex(keep))
@@ -206,19 +229,21 @@ class CPU(QThread):
         if self.ready:
             self.stepInVar = True
 
-    def extClk(self):
-        if self.psa or self.t0cs: return
+    def extClk(self, val):
+        if not self.t0cs: return
         t0se = self.dMemory.memory[1][0x01][3]
+        self.flankeVal = val
         if t0se == 1:
-            if self.flankeVal == 0:
+            if self.flankeVal == 1:
                 return
             #1 fallend, 0 steigend
         else:
-            if self.flankeVal == 1:
+            if self.flankeVal == 0:
                 return
         self.flankeClock += 1
-        if self.flankeClock%self.scaling == 0:
-            self.dMemory.incTimer0()
+        if not self.psa and self.flankeClock%self.scaling != 0:
+            return
+        self.dMemory.incTimer0()
 
     def updateUI(self):
         self.update_signal.emit(self.dMemory.getW())
@@ -229,7 +254,17 @@ class CPU(QThread):
         #         "memory": self.getMemInHex(),
         #         "pcl": self.dMemory.getPCL(),
         #     })
-
+    def getStack(self):
+        return self.stack.get()
+    
+    def getUiInfo(self):
+        return (self.dMemory.readRegister(4),#fsr
+            self.dMemory.getPCL(),#pcl,
+            self.lastPC,
+            int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])),2),#pclath,
+            self.dMemory.getPCounter(),#pc
+            self.dMemory.readRegister(3),#status
+            len(self.stack.stack))#stackp
 
 if __name__ == "__main__":
     test = CPU()

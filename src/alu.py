@@ -35,6 +35,7 @@ class ALU:
             value = self.memory.readRegister(reg_num)
         result = self.memory.getW() + value
         self.memory.setBit(0x03, 0, 1 if result >= 256 else 0)
+        self.memory.setBit(0x03, 1, 1 if (self.memory.getW() & 0x0F) + (value & 0x0F) >= 16  else 0)
         result = int(int(bin(result),2) & int('0b11111111',2))
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
             
@@ -50,6 +51,7 @@ class ALU:
         if result < 0:
             result = (result * (-1)-1) ^ 0xFF
         self.memory.setBit(0x03, 0, 0 if result < 0 else 1)
+        self.memory.setBit(0x03, 1, 0 if (self.memory.getW() & 0x0F) - (value & 0x0F) < 0  else 1)
         result = int(int(bin(result),2) & int('0b11111111',2))
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
 
@@ -61,6 +63,7 @@ class ALU:
         if result < 0:
             result = (result * (-1)-1) ^ 0xFF
         self.memory.setBit(0x03, 0, 0 if result < 0 else 1)
+        self.memory.setBit(0x03, 1, 0 if (value & 0x0F) - (self.memory.getW() & 0x0F) < 0  else 1)
         result = int(int(bin(result),2) & int('0b11111111',2))
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
 

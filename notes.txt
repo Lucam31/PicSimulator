@@ -42,3 +42,9 @@ t0cs 0 befehlstakt, 1 externer Takt
 psa 0 tmr0 vt, 1 wdt vt
 
 wenn vt neu beschrieben wdt resetten
+
+
+TODO:
+- WDT
+- interrupts
+- 
