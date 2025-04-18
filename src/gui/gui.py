@@ -81,7 +81,15 @@ class Ui_MainWindow(QObject):
             self.cpu.pauseThread = True
             self.stepin.setDisabled(False)
             self.stepover.setDisabled(False)
-    
+
+    @Slot()
+    def on_text_change(self, idx, text):
+        try:
+            if idx < 128:
+                self.cpu.dMemory.writeRegister(idx, int(text, 16), 0)
+            else:
+                self.cpu.dMemory.writeRegister(idx, int(text, 16), 1)
+        except: pass
     @Slot()
     def pinClicked(self, port, pin):
         if port == 'a' and 0 <= pin < len(self.pinalst) and self.pinalst[pin] is not None:
@@ -89,10 +97,26 @@ class Ui_MainWindow(QObject):
             if pin == 3:
                 self.cpu.extClk(val)
             self.pinalst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.cpu.dMemory.setBit(0x05,7 - pin,val)
         elif port == 'b' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
             val = int(self.pinblst[pin].text()) ^ 0x01
             self.pinblst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
-        
+            self.cpu.dMemory.setBit(0x06, 7 - pin, val)
+        elif port == 'status' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
+            val = int(self.statuslst[pin].text()) ^ 0x01
+            self.statuslst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.cpu.dMemory.setBit(0x03, 7 - pin, val)
+        elif port == 'option' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
+            val = int(self.optionlst[pin].text()) ^ 0x01
+            self.optionlst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.cpu.dMemory.setBit(0x01, 7 - pin, val,1)
+            self.option_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x01,1),'02X'), None))
+        elif port == 'intcon' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
+            val = int(self.intconlst[pin].text()) ^ 0x01
+            self.intconlst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.cpu.dMemory.setBit(0x0b, 7 - pin, val)
+            self.intcon_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x0b),'02X'), None))
+        self.cpu.updateUI()
     @Slot()
     def stepOver(self):
         self.cpu.stepOver()
@@ -130,6 +154,11 @@ class Ui_MainWindow(QObject):
         self.Status_V.setText(QCoreApplication.translate("MainWindow", f'{status:02}', None))
         self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{self.pc:04}', None))
         self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", f'{stackP:02}', None))
+        for i in range(8): #update tris
+            valA = self.cpu.dMemory.getBit(0x05, i,1)
+            self.trisalst[7-i].setText(QCoreApplication.translate("MainWindow", 'i' if (valA == 1) else 'o', None))
+            valB = self.cpu.dMemory.getBit(0x06, i, 1)
+            self.trisblst[7 - i].setText(QCoreApplication.translate("MainWindow", 'i' if (valB == 1) else 'o', None))
         try:
             self.fileLineslst[self.codeNumbers[self.pc]].setStyleSheet("border: 1px solid red;")
             if self.pc != self.lastpcl:
@@ -259,6 +288,7 @@ class Ui_MainWindow(QObject):
                 self.memorycells[j + 8 * i] = QLineEdit(self.verticalLayoutWidget)
                 self.memorycells[j + 8 * i].setAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.memorycells[j + 8 * i].setReadOnly(False)
+                self.memorycells[j + 8 * i].textChanged.connect(lambda text, idx=j + 8 * i: self.on_text_change(idx, text))
 
                 MEM_LINE.addWidget(self.memorycells[j + 8 * i])
 
@@ -305,7 +335,6 @@ class Ui_MainWindow(QObject):
 
         for i in range(8):
             self.trisalst.append(QLineEdit(self.verticalLayoutWidget_2))
-            self.trisalst[i].setObjectName(u"trisa" + str(i))
             self.trisalst[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.trisalst[i].setReadOnly(True)
             self.TrisA.addWidget(self.trisalst[i])
@@ -325,7 +354,6 @@ class Ui_MainWindow(QObject):
         self.pinalst = []
         for i in range(8):
             self.pinalst.append(QPushButton(self.verticalLayoutWidget_2))
-            self.pinalst[i].setObjectName(u"pina" + str(i))
             self.pinalst[i].clicked.connect(lambda _, pin=i: self.pinClicked('a', pin))
             self.PinA.addWidget(self.pinalst[i])
 
@@ -374,7 +402,6 @@ class Ui_MainWindow(QObject):
 
         for i in range(8):
             self.trisblst.append(QLineEdit(self.verticalLayoutWidget_2))
-            self.trisblst[i].setObjectName(u"trisb" + str(i))
             self.trisblst[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.trisblst[i].setReadOnly(True)
             self.TrisB.addWidget(self.trisblst[i])
@@ -405,11 +432,11 @@ class Ui_MainWindow(QObject):
         self.LEDS = QHBoxLayout(self.horizontalLayoutWidget_4)
         self.LEDS.setObjectName(u"LEDS")
 
-        self.ledslst = [None] * 8
+        self.ledslst = []
 
-        # for i in range(8):
-        #     self.ledslst[i] = LEDWidget()
-        #     self.LEDS.addWidget(self.ledslst[i])
+        for i in range(8):
+            self.ledslst.append(LEDWidget())
+            self.LEDS.addWidget(self.ledslst[i])
 
         self.verticalLayoutWidget_3 = QWidget(self.centralwidget)
         self.verticalLayoutWidget_3.setObjectName(u"verticalLayoutWidget_3")
@@ -592,10 +619,10 @@ class Ui_MainWindow(QObject):
 
         self.Stack.addWidget(self.stack)
 
-        self.stacklst = [QLabel] * 8
+        self.stacklst = []
 
         for i in range(8):
-            self.stacklst[i] = QLabel(self.verticalLayoutWidget_3)
+            self.stacklst.append(QLabel(self.verticalLayoutWidget_3))
             self.stacklst[i].setObjectName(u"stack" + str(i))
             self.stacklst[i].setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.Stack.addWidget(self.stacklst[i])
@@ -653,12 +680,13 @@ class Ui_MainWindow(QObject):
         self.statusvalues = QHBoxLayout()
 
 
-        self.statuslst = [QLabel] * 8
+        self.statuslst = []
 
         for i in range(8):
-            self.statuslst[i] = QPushButton()
-            self.statuslst[i].setObjectName(u"status" + str(i))
+            self.statuslst.append(QPushButton())
+            self.statuslst[i].clicked.connect(lambda _, pin=i: self.pinClicked('status', pin))
             self.statusvalues.addWidget(self.statuslst[i])
+
             self.statusvalues.addItem(QSpacerItem(15, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         self.statusstack.addLayout(self.statusvalues)
@@ -717,7 +745,7 @@ class Ui_MainWindow(QObject):
 
         for i in range(8):
             self.optionlst[i] = QPushButton()
-            self.optionlst[i].setObjectName(u"status" + str(i))
+            self.optionlst[i].clicked.connect(lambda _, pin=i: self.pinClicked('option', pin))
             self.optionvalues.addWidget(self.optionlst[i])
             self.optionvalues.addItem(QSpacerItem(15, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
@@ -777,7 +805,7 @@ class Ui_MainWindow(QObject):
 
         for i in range(8):
             self.intconlst[i] = QPushButton()
-            self.intconlst[i].setObjectName(u"status" + str(i))
+            self.intconlst[i].clicked.connect(lambda _, pin=i: self.pinClicked('intcon', pin))
             self.intconvalues.addWidget(self.intconlst[i])
             self.intconvalues.addItem(QSpacerItem(15, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
@@ -1009,8 +1037,8 @@ class Ui_MainWindow(QObject):
         self.stack.setText(QCoreApplication.translate("MainWindow", u"Stack", None))
         for v in self.stacklst:
             v.setText(QCoreApplication.translate("MainWindow", u"0000", None))
-        for v in self.statuslst:
-            v.setText("")
+        for i in range(8):
+            self.statuslst[i].setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getBit(0x03,i)), None))
         self.label_16.setText(QCoreApplication.translate("MainWindow", u"C", None))
         self.label_9.setText(QCoreApplication.translate("MainWindow", u"TO", None))
         self.label_14.setText(QCoreApplication.translate("MainWindow", u"Z", None))
@@ -1031,10 +1059,8 @@ class Ui_MainWindow(QObject):
         self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
         self.stepover.setText(QCoreApplication.translate("MainWindow", u"Step over", None))
         self.stepout.setText(QCoreApplication.translate("MainWindow", u"Step out", None))
-        
         self.option_k.setText(QCoreApplication.translate("MainWindow", u"Option", None))
-        self.option_v.setText(QCoreApplication.translate("MainWindow", u"FF", None))
-
+        self.option_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x01,1),'02X'), None))
         self.rbp.setText(QCoreApplication.translate("MainWindow", u"RBP", None))
         self.IntEdg.setText(QCoreApplication.translate("MainWindow", u"IntEdg", None))
         self.TOCS.setText(QCoreApplication.translate("MainWindow", u"TOCS", None))
@@ -1043,10 +1069,10 @@ class Ui_MainWindow(QObject):
         self.PS2.setText(QCoreApplication.translate("MainWindow", u"PS2", None))
         self.PS1.setText(QCoreApplication.translate("MainWindow", u"PS1", None))
         self.PS0.setText(QCoreApplication.translate("MainWindow", u"PS0", None))
-
-
+        for i in range(8):
+            self.optionlst[i].setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getBit(0x01,i,1)), None))
         self.intcon_k.setText(QCoreApplication.translate("MainWindow", u"INTCON", None))
-        self.intcon_v.setText(QCoreApplication.translate("MainWindow", u"00", None))
+        self.intcon_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x0b),'02X'), None))
         self.gie.setText(QCoreApplication.translate("MainWindow", u"GIE", None))
         self.pie.setText(QCoreApplication.translate("MainWindow", u"PIE", None))
         self.toie.setText(QCoreApplication.translate("MainWindow", u"T0IE", None))
@@ -1055,7 +1081,8 @@ class Ui_MainWindow(QObject):
         self.toif.setText(QCoreApplication.translate("MainWindow", u"T0IF", None))
         self.intf.setText(QCoreApplication.translate("MainWindow", u"INTF", None))
         self.rbif.setText(QCoreApplication.translate("MainWindow", u"RBIF", None))
-
+        for i in range(8):
+            self.intconlst[i].setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getBit(0x0b,i)), None))
 
 
         self.updateIntern()
