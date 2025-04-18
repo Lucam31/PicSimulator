@@ -95,10 +95,11 @@ class DataMemory:
         newVal = self.readRegister(0x02, 1) + 1
         if newVal >= 256:
             newVal = 0
-            self.incPCLATH()
+            # self.incPCLATH()
         # self.bank0[0x02] = newVal
         # self.bank1[0x02] = newVal
         self.setPCL(newVal)
+        self.incPCounter()
 
     def getPCLATH(self) -> int:
         return self.readRegister(0x0A, 1)
@@ -122,6 +123,9 @@ class DataMemory:
 
     def getPCounter(self) -> int:
         return self.pCounter
+    
+    def incPCounter(self) -> None:
+        self.pCounter += 1
     
     def resetPC(self) -> None:
         self.setPCounter(0)
@@ -155,21 +159,23 @@ class DataMemory:
         else:
             raise ValueError("Invalid register address")
         
-    def setBit(self, register: int, bit: int, value: int) -> None:
+    def setBit(self, register: int, bit: int, value: int, bank=None) -> None:
         if register in range(0x00, 0x80):
             if register == 0:
                 register = self.readRegister(4)
+            bank = self.getActiveBank() if bank == None else bank
             if register in MIRRORED_REGISTERS:
-                self.memory[1 - self.getActiveBank()][register][7-bit] = value
-            self.memory[self.getActiveBank()][register][7-bit] = value
+                self.memory[1 - bank][register][7-bit] = value
+            self.memory[bank][register][7-bit] = value
         else:
             raise ValueError("Invalid register address")
         
-    def getBit(self, register: int, bit: int) -> int:
+    def getBit(self, register: int, bit: int, bank=None) -> int:
         if register in range(0x00, 0x80):
             if register == 0:
                 register = self.readRegister(4)
-            return self.memory[self.getActiveBank()][register][7-bit]
+            bank = self.getActiveBank() if bank == None else bank
+            return self.memory[bank][register][7-bit]
         else:
             raise ValueError("Invalid register address")
 
@@ -183,7 +189,11 @@ class DataMemory:
     
     def incTimer0(self):
         value = int(("".join([str(x) for x in self.memory[0][1]])),2)
-        test = bin((value+1) & 0xFF)[2:]
+        value += 1
+        if value >= 256:
+            value = 0
+            self.setBit(0x0B, 2, 1)
+        test = bin(value)[2:]
         string = ('0'*(8-len(test))) + test
         self.memory[0][1] = [int(char) for char in string]
 
