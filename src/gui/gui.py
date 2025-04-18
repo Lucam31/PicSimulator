@@ -90,6 +90,21 @@ class Ui_MainWindow(QObject):
             else:
                 self.cpu.dMemory.writeRegister(idx, int(text, 16), 1)
         except: pass
+        self.memorycells[idx].clearFocus()
+    @Slot()
+    def change_execution_time(self):
+        text = self.Freq_V.text()
+        print(text)
+        try:
+            value = float(text)
+            self.quartFreq = value
+            self.executionTime = 4 / self.quartFreq
+            self.Freq_V.setText(f"{value:.3f}")
+            self.label.setText(f"{self.executionTime:.3f}")
+        except ValueError:
+            print("Invalid input")
+            pass
+        self.Freq_V.clearFocus()
     @Slot()
     def pinClicked(self, port, pin):
         if port == 'a' and 0 <= pin < len(self.pinalst) and self.pinalst[pin] is not None:
@@ -110,12 +125,10 @@ class Ui_MainWindow(QObject):
             val = int(self.optionlst[pin].text()) ^ 0x01
             self.optionlst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
             self.cpu.dMemory.setBit(0x01, 7 - pin, val,1)
-            self.option_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x01,1),'02X'), None))
         elif port == 'intcon' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
             val = int(self.intconlst[pin].text()) ^ 0x01
             self.intconlst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
             self.cpu.dMemory.setBit(0x0b, 7 - pin, val)
-            self.intcon_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x0b),'02X'), None))
         self.cpu.updateUI()
     @Slot()
     def stepOver(self):
@@ -141,7 +154,7 @@ class Ui_MainWindow(QObject):
         for i in range(len(memory)):
             self.memorycells[i].setText(QCoreApplication.translate("MainWindow", format(memory[i], '02X'), None))
         self.WREG_V.setText(QCoreApplication.translate("MainWindow", format(data, '02X'), None))
-        self.Time_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.clock) + " us", None))
+        self.Time_V.setText(QCoreApplication.translate("MainWindow", str(f"{(self.cpu.clock * self.executionTime):.3f}") + " us", None))
         stackContent = self.cpu.getStack()
         for i in range(8 - len(stackContent)): stackContent.append(0)
         for i in range(len(stackContent)):
@@ -154,11 +167,30 @@ class Ui_MainWindow(QObject):
         self.Status_V.setText(QCoreApplication.translate("MainWindow", f'{status:02}', None))
         self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{self.pc:04}', None))
         self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", f'{stackP:02}', None))
-        for i in range(8): #update tris
-            valA = self.cpu.dMemory.getBit(0x05, i,1)
-            self.trisalst[7-i].setText(QCoreApplication.translate("MainWindow", 'i' if (valA == 1) else 'o', None))
-            valB = self.cpu.dMemory.getBit(0x06, i, 1)
-            self.trisblst[7 - i].setText(QCoreApplication.translate("MainWindow", 'i' if (valB == 1) else 'o', None))
+        for i in range(8):
+            # update trisA
+            val = self.cpu.dMemory.getBit(0x05, i,1)
+            self.trisalst[7-i].setText(QCoreApplication.translate("MainWindow", 'i' if (val == 1) else 'o', None))
+            # update trisB
+            val = self.cpu.dMemory.getBit(0x06, i, 1)
+            self.trisblst[7 - i].setText(QCoreApplication.translate("MainWindow", 'i' if (val == 1) else 'o', None))
+            # update status buttons
+            val = self.cpu.dMemory.getBit(0x03, i)
+            self.statuslst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            # update pinA
+            val = self.cpu.dMemory.getBit(0x05, i)
+            self.pinalst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            # update pinB
+            val = self.cpu.dMemory.getBit(0x06, i)
+            self.pinblst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            # update option reg
+            val = self.cpu.dMemory.getBit(0x01, i, 1)
+            self.optionlst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.option_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x01, 1), '02X'), None))
+            # update intcon reg
+            val = self.cpu.dMemory.getBit(0x0b, i)
+            self.intconlst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.intcon_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x0b), '02X'), None))
         try:
             self.fileLineslst[self.codeNumbers[self.pc]].setStyleSheet("border: 1px solid red;")
             if self.pc != self.lastpcl:
@@ -185,6 +217,9 @@ class Ui_MainWindow(QObject):
 
 
         self.codeNumbers = []
+
+        self.quartFreq = 4.000
+        self.executionTime = 1.000
 
 
         # cpu.load_program()
@@ -288,7 +323,7 @@ class Ui_MainWindow(QObject):
                 self.memorycells[j + 8 * i] = QLineEdit(self.verticalLayoutWidget)
                 self.memorycells[j + 8 * i].setAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.memorycells[j + 8 * i].setReadOnly(False)
-                self.memorycells[j + 8 * i].textChanged.connect(lambda text, idx=j + 8 * i: self.on_text_change(idx, text))
+                self.memorycells[j + 8 * i].returnPressed.connect(lambda text, idx=j + 8 * i: self.on_text_change(idx, text))
 
                 MEM_LINE.addWidget(self.memorycells[j + 8 * i])
 
@@ -832,9 +867,10 @@ class Ui_MainWindow(QObject):
 
         self.QUARTTIME.addWidget(self.Freq_K)
 
-        self.Freq_V = QLabel(self.horizontalLayoutWidget)
+        self.Freq_V = QLineEdit(self.horizontalLayoutWidget)
         self.Freq_V.setObjectName(u"Freq_V")
         self.Freq_V.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.Freq_V.returnPressed.connect(self.change_execution_time)
 
         self.QUARTTIME.addWidget(self.Freq_V)
 
@@ -1047,9 +1083,9 @@ class Ui_MainWindow(QObject):
         self.label_15.setText(QCoreApplication.translate("MainWindow", u"DC", None))
         self.label_13.setText(QCoreApplication.translate("MainWindow", u"PD", None))
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"RP", None))
-        self.Freq_K.setText(QCoreApplication.translate("MainWindow", u"Quarzfrequenz", None))
-        self.Freq_V.setText(QCoreApplication.translate("MainWindow", u"4,000000 MHz", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"1,000us", None))
+        self.Freq_K.setText(QCoreApplication.translate("MainWindow", u"Quarzfrequenz in MHz", None))
+        self.Freq_V.setText(QCoreApplication.translate("MainWindow", str(f"{self.quartFreq:.3f}"), None))
+        self.label.setText(QCoreApplication.translate("MainWindow", str(f"{self.executionTime:.3f}") + " us", None))
         self.Time_K.setText(QCoreApplication.translate("MainWindow", u"Laufzeit", None))
         self.Time_V.setText(QCoreApplication.translate("MainWindow", u"0,00 us", None))
         self.pushButton.setText(QCoreApplication.translate("MainWindow", u"Zur\u00fccksetzen", None))
