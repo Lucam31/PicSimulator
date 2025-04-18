@@ -41,7 +41,19 @@ class CPU(QThread):
         if not self.ready: 
             return
         while(1):
-            # if self.initialUpdate: self.updateUI()
+            # check for interrupts
+            intcon = self.dMemory.readRegister(0x0B)
+            if(intcon & 0x80 > 0): #if GIE is set, ints are enabled
+                if(intcon & 0x38 > 0):
+                    if(intcon & 0x07 > 0): 
+                        self.dMemory.setBit(0x0B, 7, 0)
+                        self.stack.push(self.dMemory.getPCounter())
+                        self.dMemory.setPCL(4)
+                        self.dMemory.setPCLATH(0)
+                        self.dMemory.setPCounter(4)
+                        self.clock += 2
+                        self.timer += 2
+
             while(self.pauseThread):
                 if(self.stopThread): break
                 if self.stepInVar or self.stepOverVar: 
@@ -55,7 +67,7 @@ class CPU(QThread):
             print(inst)
             self.lastPC = self.dMemory.getPCounter()
             self.dMemory.incPCL()
-            self.dMemory.setPCounter()
+            # self.dMemory.incPCounter()
             if 'add' in inst[0] or 'sub' in inst[0] or 'and' in inst[0] or 'ior' in inst[0] or 'xor' in inst[0]:
                 self.alu.execute(inst)
             match inst[0]:
@@ -69,16 +81,12 @@ class CPU(QThread):
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
                     self.dMemory.setBit(0x03, 2, 1 if val == 0 else 0)
                 case 'goto':
-                    # if self.dMemory.getPCounter() == inst[1]: break
                     pclath = int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])[3:5]),2) << 3
                     val = bin(inst[1])[2:]
-                    val = '0'*(11-len(val)) + val
-                    pclath = pclath + int(val[:3],2)
-                    pcl = int(val[3:],2)
-                    self.dMemory.setPCL(pcl)
-                    self.dMemory.setPCLATH(pclath)
-                    pc = (pclath << 8) + pcl
+                    # val = '0'*(11-len(val)) + val
+                    pc = (pclath << 8) + int(val,2)
                     self.dMemory.setPCounter(pc)
+                    self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
                     self.clock += 1
                     self.timer += 1
                 case 'sleep':
@@ -89,13 +97,10 @@ class CPU(QThread):
                     self.stack.push(self.dMemory.getPCounter())
                     pclath = int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])[3:5]),2) << 3
                     val = bin(inst[1])[2:]
-                    val = '0'*(11-len(val)) + val
-                    pclath = pclath + int(val[:3],2)
-                    pcl = int(val[3:],2)
-                    self.dMemory.setPCL(pcl)
-                    self.dMemory.setPCLATH(pclath)
-                    pc = (pclath << 8) + pcl
+                    # val = '0'*(11-len(val)) + val
+                    pc = (pclath << 8) + int(val,2)
                     self.dMemory.setPCounter(pc)
+                    self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
                     self.clock += 1
                     self.timer += 1
                 case 'ret':
@@ -112,6 +117,9 @@ class CPU(QThread):
                     self.clock += 1
                     self.timer += 1
                 case 'retfie':
+                    self.dMemory.setBit(0x0B, 7, 1)
+                    self.dMemory.setPCounter(self.stack.pop())
+                    self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
                     self.clock += 1
                     self.timer += 1
                     # implementation missing
@@ -126,6 +134,7 @@ class CPU(QThread):
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
                     if val == 0: 
                         self.dMemory.incPCL()
+                        # self.dMemory.incPCounter()
                         self.clock += 1
                         self.timer += 1
                 case 'decf':
@@ -135,6 +144,7 @@ class CPU(QThread):
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
                     if val == 0: 
                         self.dMemory.incPCL()
+                        # self.dMemory.incPCounter()
                         self.clock += 1
                         self.timer += 1
                 case 'swapf':
@@ -156,9 +166,10 @@ class CPU(QThread):
                 case 'rrf':
                     val = self.dMemory.readRegister(inst[1])
                     cSet = self.dMemory.getBit(0x03, 0)
-                    self.dMemory.setBit(0x03, 0, 1 if str(val)[-1] == '1' else 0)
+                    self.dMemory.setBit(0x03, 0, 1 if str(bin(val))[-1] == '1' else 0)
                     val = val >> 1
-                    val += 128*cSet
+                    if cSet: 
+                        val = val | 0x80
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val & 0xFF)
                 case 'bcf':
                     self.dMemory.setBit(inst[1], inst[2], 0)
@@ -167,11 +178,13 @@ class CPU(QThread):
                 case 'btfsc':
                     if not self.dMemory.getBit(inst[1], inst[2]): 
                         self.dMemory.incPCL()
+                        # self.dMemory.incPCounter()
                         self.clock += 1
                         self.timer += 1
                 case 'btfss':
                     if self.dMemory.getBit(inst[1], inst[2]): 
                         self.dMemory.incPCL()
+                        # self.dMemory.incPCounter()
                         self.clock += 1
                         self.timer += 1
                 # clrwdt, retfie

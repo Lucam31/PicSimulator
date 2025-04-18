@@ -102,8 +102,8 @@ class Ui_MainWindow(QObject):
     @Slot()
     def onIgnore(self):
         self.fileLineslst[self.codeNumbers[self.cpu.dMemory.getPCounter()]].setStyleSheet("border: 1px solid None;")
-        self.cpu.dMemory.incPCL()
-        self.cpu.dMemory.setPCounter()
+        self.cpu.dMemory.incPCounter()
+        # self.cpu.dMemory.setPCounter()
         self.cpu.updateUI()
 
     @Slot(int)
@@ -1062,7 +1062,7 @@ class Ui_MainWindow(QObject):
     # retranslateUi
 
     def open_documentation(self):
-        doc_url = QUrl.fromLocalFile("/Users/leandergantert/Documents/Projekte/Python/PicSimulator/Dateien/Bewertungsschema_Simulator_DHBW_HSO_2024.pdf")
+        doc_url = QUrl.fromLocalFile(os.getcwd() + "/Dateien/Bewertungsschema_Simulator_DHBW_HSO_2024.pdf")
         QDesktopServices.openUrl(doc_url)
 
     def updateIntern(self):

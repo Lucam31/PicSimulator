@@ -40,14 +40,15 @@ class ALU:
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
             
         self.memory.writeRegister(reg_num if dest else 'w', result)  # Simulate 8-bit overflow
-        # print(value)
-        # print(self.memory.getW())
-        # print(self.memory.readRegister(reg_num))
+        if reg_num == 2 and dest != 'w':
+            pc = self.memory.getPCL()
+            pcl = self.memory.getPCLATH() << 8
+            self.memory.setPCounter(pc + pcl)
 
     def sub(self, dest, reg_num, value=None):
         if(reg_num != 'w'):
             value = self.memory.readRegister(reg_num)
-        result = self.memory.getW() - value
+        result = value - self.memory.getW()
         if result < 0:
             result = (result * (-1)-1) ^ 0xFF
         self.memory.setBit(0x03, 0, 0 if result < 0 else 1)
@@ -98,7 +99,7 @@ class ALU:
 
     def addWithoutW(self, val1, val2):
         result = val1 + val2
-        self.memory.setBit(0x03, 0, 1 if result >= 256 else 0)
+        # self.memory.setBit(0x03, 0, 1 if result >= 256 else 0)
         result = int(int(bin(result),2) & int('0b11111111',2))
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
         return result
@@ -107,7 +108,7 @@ class ALU:
         result = val1 - val2
         if result < 0:
             result = (result * (-1)-1) ^ 0xFF
-        self.memory.setBit(0x03, 0, 0 if result < 0 else 1)
+        # self.memory.setBit(0x03, 0, 0 if result < 0 else 1)
         result = int(int(bin(result),2) & int('0b11111111',2))
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
         return result
