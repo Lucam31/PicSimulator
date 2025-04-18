@@ -45,10 +45,17 @@ wenn vt neu beschrieben wdt resetten
 
 
 TODO:
-- WDT
-- interrupts
+- WDT (WD active??)
+- Sleep befehl
+- MCLR Reset??
+- interrupts (breakpoint at beginning of ISR)
 - PORT/TRIS aktualisieren, wenn in code geändert
-- SFR, GPR richtig anzeigen
+- Resetmöglichkeiten SFR/GPR????
+- EEPROM write (check if 55h and AAh and only then write??)
+- Lauflicht und Leuchtband
+- IO-Ausgangslatch (PORTS auf Ein-/Ausgang setzen)
+- Doku schreiben
+- Fragen nach Punkteverteilung (Lehmann du Unhold, dein Wissen enthältst du uns, um Qual und Schrecken zu erregen. Mein Leid war groß in der letzten Hälfte des letzten Jahres, doch die Ausmaße deiner Schreckensherrschaft werden erst jetzt deutlich. Unwissenheit und Verzweiflung sind wie süßer Honig für dich. Mit bohrenden Blicken säst du Verunsicherung in unseren Herzen. Unwohlsein ist der Preis für die Teilnahme an der Folter, die du Pic Simulator nennst. Auf ewig soll mir das Leid in deiner Obhut in Erinnerung bleiben und nie werde ich von den daraus entstandenen Albträumen erlöst.)
 
-
+- frei wählbare Quarzfrequenz
 4/Quarzfrequenz in MHz ergibt Dauer pro Takt in us
