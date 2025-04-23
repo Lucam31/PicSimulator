@@ -36,3 +36,20 @@ ENV/
 env.bak/
 venv.bak/
 
+# Latex
+*.aux
+*.bbl
+*.blg
+*.dvi
+*.idx
+*.ilg
+*.ind
+*.log
+*.out
+*.pdf
+*.toc
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.synctex
+*.run.xml
