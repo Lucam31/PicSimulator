@@ -17,6 +17,10 @@ class DataMemory:
         self.bank1 = [[0] * 8] * 128
         self.WREG = 0
         self.pCounter = 0
+        self.con55 = False
+        self.conAA = False
+        self.eewrite = False
+        self.eeread = False
         
         self.initBank0()
         self.initBank1()
@@ -153,6 +157,15 @@ class DataMemory:
                 register = self.readRegister(4)
             string = ('0'*(8-len(test))) + test
             activeReg = self.getActiveBank() if bank == None else bank
+            if activeReg == 1 and register == 0x09:
+                if value != 0xAA and value != 0x55:
+                    self.conAA = False
+                    self.con55 = False
+                else:
+                    if value == 0x55:
+                        self.con55 = True
+                    elif value == 0xAA:
+                        self.conAA = self.con55
             if register in MIRRORED_REGISTERS:
                 self.memory[1 - activeReg][register] = [int(char) for char in string]
             self.memory[activeReg][register] = [int(char) for char in string]
@@ -166,6 +179,17 @@ class DataMemory:
             bank = self.getActiveBank() if bank == None else bank
             if register in MIRRORED_REGISTERS:
                 self.memory[1 - bank][register][7-bit] = value
+            if register == 0x08 and bit == 1:
+                if value == 1 and self.conAA and self.con55 and self.getBit(0x08, 2, 1) == 1:
+                    self.eewrite = True
+                else:
+                    self.eewrite = False
+                    self.conAA = False
+                    self.con55 = False
+                return
+            if register == 0x08 and bit == 0 and value == 1:
+                self.eeread = True
+                return
             self.memory[bank][register][7-bit] = value
         else:
             raise ValueError("Invalid register address")
