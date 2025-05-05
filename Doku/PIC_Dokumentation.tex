@@ -123,41 +123,50 @@ Die Benutzeroberfläche bietet eine visuelle Darstellung des Mikrocontrollers un
     \item \textbf{Simulation von Peripheriegeräten}: Timer, Interrupts und andere Peripheriegeräte können simuliert und überwacht werden.
     \item \textbf{Echtzeit-Updates}: Änderungen im Programm oder in der Hardwarekonfiguration werden sofort in der Benutzeroberfläche reflektiert.
     \item \textbf{Interaktive Elemente}: Benutzer können direkt mit der Simulation interagieren, z. B. durch das Ändern von I/O-Pin-Zuständen.
-\end{itemize}
-
-\section{Anpassungsmöglichkeiten}
-Die Benutzeroberfläche ist flexibel und kann an die Bedürfnisse des Benutzers angepasst werden:
-\begin{itemize}
-    \item \textbf{Layout-Anpassung}: Bereiche der Benutzeroberfläche können verschoben, vergrößert oder verkleinert werden.
-    \item \textbf{Konfiguration}: Benutzer können Einstellungen wie die Taktfrequenz des Simulators oder die Darstellung der Speicheranzeige anpassen.
+    \item \textbf{Konfiguration}: Benutzer können die Taktfrequenz des Simulators anpassen.
 \end{itemize}
 
 \section{Zusammenfassung}
 Die Benutzeroberfläche des PIC Simulators kombiniert Funktionalität und Benutzerfreundlichkeit. Sie bietet alle notwendigen Werkzeuge, um Programme effizient zu entwickeln, zu testen und zu debuggen. Durch die klare Struktur und die interaktiven Elemente wird die Arbeit mit dem Simulator erheblich erleichtert.
 
+
+
+
+
+
+
 \chapter{Technische Details und Funktionsweise}
 
 \section{Beschreibung des Grundkonzepts}
-Der PIC Simulator wurde entwickelt, um die Funktionalität eines Mikrocontrollers der PIC-Familie zu simulieren. Ziel ist es, Entwicklern eine Plattform zu bieten, auf der sie Programme testen und debuggen können, ohne physische Hardware zu benötigen. Der Simulator bildet die Architektur des Mikrocontrollers nach, einschließlich CPU, Speicher, Register und Peripheriegeräten. Dabei werden alle Befehle des Mikrocontrollers interpretiert und ausgeführt, während der Zustand des Systems in Echtzeit visualisiert wird.
-
-\section{Programmstruktur}
-Die Software ist modular aufgebaut, um eine einfache Erweiterbarkeit und Wartung zu gewährleisten. Die Hauptkomponenten sind:
-\begin{itemize}
-    \item \textbf{CPU-Modul}: Simuliert die zentrale Verarbeitungseinheit, einschließlich Befehlsdekodierung und Ausführung.
-    \item \textbf{Speichermodul}: Verwalten des Programmspeichers (ROM) und des Datenspeichers (RAM).
-    \item \textbf{Peripheriemodul}: Simulation von Timer, Interrupts und I/O-Pins.
-    \item \textbf{Benutzeroberflächenmodul}: Visualisiert den Zustand des Systems und ermöglicht Interaktionen.
-    \item \textbf{Debugger}: Bietet Funktionen wie Breakpoints, Schritt-für-Schritt-Ausführung und Speicherüberwachung.
-\end{itemize}
+Der Simulator bildet die Architektur des Mikrocontrollers nach, einschließlich CPU, Speicher, Register und Peripheriegeräten. Dabei werden alle Befehle des Mikrocontrollers interpretiert und ausgeführt, während der Zustand des Systems in Echtzeit visualisiert wird.
 
 \section{Warum Python gewählt wurde}
-Python wurde als Programmiersprache gewählt, da es mehrere Vorteile bietet:
+Zur Umsetzung des Projekts wurde Python als Programmiersprache gewählt, da es mehrere Vorteile bietet:
 \begin{itemize}
-    \item \textbf{Einfache Syntax}: Python ermöglicht eine klare und übersichtliche Implementierung, was die Entwicklung und Wartung erleichtert.
+    \item \textbf{Einfache Syntax}: Python ermöglicht eine klare und übersichtliche Implementierung, was die Entwicklung erleichtert.
     \item \textbf{Schnelle Entwicklungszeit}: Dank der hohen Abstraktionsebene können Prototypen schnell erstellt und getestet werden.
-    \item \textbf{Umfangreiche Bibliotheken}: Python bietet zahlreiche Bibliotheken, wie \texttt{Tkinter} für die GUI und \texttt{matplotlib} für Visualisierungen, die die Entwicklung beschleunigen.
+    \item \textbf{Umfangreiche Bibliotheken}: Python bietet zahlreiche Bibliotheken, wie \texttt{PyQt} für die GUI, welche die Entwicklung beschleunigen.
     \item \textbf{Plattformunabhängigkeit}: Python-Programme können auf verschiedenen Betriebssystemen ausgeführt werden.
 \end{itemize}
+
+\section{Ausführung eines Befehls}
+
+\section{Ausführung eines Befehlszyklus}
+
+Der Befehlszyklus im PIC Simulator folgt einem klar strukturierten Ablauf. Zunächst wird die Assemblerdatei analysiert, und die darin enthaltenen Befehle in ein Array geladen, das als Programmspeicher dient. 
+
+Zu Beginn eines Befehls Zyklus wird überprüft, ob sich der Mikrocontroller im Sleep-Modus befindet, die Ausführung pausiert wurde oder der aktuelle Befehl ignoriert werden soll. Anschließend wird der nächste Befehl aus dem Programmspeicher eingelesen und dekodiert. Der Programmzähler (Program Counter) wird daraufhin inkrementiert, um auf den nächsten Befehl zu zeigen. Basierend auf der Dekodierung wird die entsprechende Funktion ausgeführt, welche den Befehl implementiert und dabei alle relevanten Statusflags (z. B. Carry, Zero) setzt. Nach der Ausführung des Befehls wird die Laufzeit des Programms entsprechend der Befehlslänge inkrementiert. Gleichzeitig wird der Watchdog-Timer erhöht, um dessen Überwachung zu simulieren. Zum Abschluss eines Zyklus werden anstehende Interrupts geprüft und verarbeitet. Schließlich wird die Benutzeroberfläche aktualisiert, um den aktuellen Zustand des Mikrocontrollers visuell darzustellen.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.9\textwidth]{./img/excec_cycle.drawio.pdf}
+    \caption{Programmablauf einer Befehlsausführung}
+    \label{fig:execTask}
+\end{figure}
+
+
+
+
 
 
 \chapter{Fazit}
