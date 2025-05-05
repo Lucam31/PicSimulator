@@ -50,6 +50,7 @@ class Ui_MainWindow(QObject):
             self.onReset()
             fileLines, self.codeNumbers = self.cpu.load_program(path) #fileLines, codenumbers
             self.readFileToScrollArea(fileLines)
+        self.onReset()
         self.cpuThread.quit()
         self.cpuThread.start()
         self.updateIntern()
@@ -61,6 +62,19 @@ class Ui_MainWindow(QObject):
             for check in self.breakChecklst:
                 check.setChecked(False)
         except: pass
+        for i in range(8):
+            # update pinA
+            val = 0
+            self.cpu.dMemory.setBit(0x05, i, 0, 0)
+            self.pinalst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.pinalst[7 - i].setDisabled(False)
+            # update pinB
+            self.cpu.dMemory.setBit(0x06, i, 0, 0)
+            self.pinblst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.pinblst[7 - i].setDisabled(False)
+            # update led, only set if pin is output???
+            self.ledslst[7 - i].led_state = val
+            self.ledslst[7 - i].update()
         self.cpu.sleepOn = False
         if wdt == 0:
             self.cpu.reset()
