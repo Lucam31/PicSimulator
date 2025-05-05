@@ -49,10 +49,10 @@ class ALU:
         if(reg_num != 'w'):
             value = self.memory.readRegister(reg_num)
         result = value - self.memory.getW()
-        if result < 0:
-            result = (result * (-1)-1) ^ 0xFF
         self.memory.setBit(0x03, 0, 0 if result < 0 else 1)
         self.memory.setBit(0x03, 1, 0 if (self.memory.getW() & 0x0F) - (value & 0x0F) < 0  else 1)
+        if result < 0:
+            result = (result * (-1)-1) ^ 0xFF
         result = int(int(bin(result),2) & int('0b11111111',2))
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
 
@@ -108,7 +108,6 @@ class ALU:
         result = val1 - val2
         if result < 0:
             result = (result * (-1)-1) ^ 0xFF
-        # self.memory.setBit(0x03, 0, 0 if result < 0 else 1)
         result = int(int(bin(result),2) & int('0b11111111',2))
         self.memory.setBit(0x03, 2, 1 if result == 0 else 0)
         return result

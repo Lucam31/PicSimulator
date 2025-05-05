@@ -5,11 +5,13 @@ from alu import ALU
 import os
 from time import sleep
 
-from PySide6.QtCore import QObject, Signal, QThread, Slot
+from PySide6.QtCore import QObject, Signal, QThread, Slot, QCoreApplication
 
 class CPU(QThread):
     update_signal = Signal(int)  # Signal to notify the GUI to update
     finished_signal = Signal()  # Signal to notify when execution is complete
+    reset_signal = Signal(int)     # Signal to reset the application
+    pause_signal = Signal()
 
     def __init__(self, gui=False):
         super().__init__()
@@ -29,6 +31,13 @@ class CPU(QThread):
         self.flanke = False
         self.t0cs, self.psa, self.scaling = 1, 1, 16
         self.lastPC = 0
+        self.wdt, self.wdtClock = 0, 0
+        self.sleepOn = False
+        self.skip = False
+        self.rb0, self.intf = 0, 0
+        self.rb4, self.rb5, self.rb6, self.rb7 = 0, 0, 0, 0
+        self.eewritetime = 0
+        self.eewrite = True
         # self.initialUpdate = True
         
 
@@ -41,18 +50,6 @@ class CPU(QThread):
         if not self.ready: 
             return
         while(1):
-            # check for interrupts
-            intcon = self.dMemory.readRegister(0x0B)
-            if(intcon & 0x80 > 0): #if GIE is set, ints are enabled
-                if(intcon & 0x38 > 0):
-                    if(intcon & 0x07 > 0): 
-                        self.dMemory.setBit(0x0B, 7, 0)
-                        self.stack.push(self.dMemory.getPCounter())
-                        self.dMemory.setPCL(4)
-                        self.dMemory.setPCLATH(0)
-                        self.dMemory.setPCounter(4)
-                        self.clock += 2
-                        self.timer += 2
 
             while(self.pauseThread):
                 if(self.stopThread): break
@@ -62,11 +59,43 @@ class CPU(QThread):
                     break
             if(self.stopThread): 
                 break
+
+            if self.dMemory.eeread:
+                self.dMemory.eeread = False
+                self.dMemory.writeRegister(0x08, self.dMemory.readRegister(self.dMemory.readRegister(0x09, 0)), 0)
+
+            # write to eeprom
+            if(self.dMemory.eewrite):
+                if self.eewrite:
+                    self.dMemory.writeRegister(self.dMemory.readRegister(0x09, 0), self.dMemory.readRegister(0x08, 0))
+                    self.eewrite = False
+                # 1ms delay to write to eeprom
+                if self.eewritetime >= 1000:
+                    self.dMemory.eewrite = False
+                    self.dMemory.con55 = False
+                    self.dMemory.conAA = False
+                    self.eewritetime = 0
+                    self.dMemory.setBit(0x08, 4, 1, 1)
+
+            if(self.sleepOn):
+                intcon = self.dMemory.readRegister(0x0B)
+                if(intcon & 0x38 > 0):
+                    if(intcon & 0x07 > 0):
+                        self.sleepOn = False
+                self.incWDT()
+                self.skip = True
+                continue
+            
+            if self.skip:
+                self.skip = False
+                sleep(0.05)
+                continue
             cmd = self.pMemory.read(self.dMemory.getPCounter())
             inst = self.decoder.decode('0x'+str(cmd))
             print(inst)
             self.lastPC = self.dMemory.getPCounter()
-            self.dMemory.incPCL()
+            if inst[0] != 'sleep':
+                self.dMemory.incPCL()
             # self.dMemory.incPCounter()
             if 'add' in inst[0] or 'sub' in inst[0] or 'and' in inst[0] or 'ior' in inst[0] or 'xor' in inst[0]:
                 self.alu.execute(inst)
@@ -87,12 +116,12 @@ class CPU(QThread):
                     pc = (pclath << 8) + int(val,2)
                     self.dMemory.setPCounter(pc)
                     self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
-                    self.clock += 1
-                    self.timer += 1
+                    self.addClockCycle()
                 case 'sleep':
-                    self.clock += 1#inst[1]
-                    self.timer += 1
-                    # fehlt noch was
+                    self.addClockCycle()
+                    self.sleepOn = True
+                    self.dMemory.setBit(0x03, 3, 0)
+                    self.dMemory.setBit(0x03, 4, 1)
                 case 'call':
                     self.stack.push(self.dMemory.getPCounter())
                     pclath = int(("".join([str(x) for x in self.dMemory.memory[1][0x0A]])[3:5]),2) << 3
@@ -101,27 +130,23 @@ class CPU(QThread):
                     pc = (pclath << 8) + int(val,2)
                     self.dMemory.setPCounter(pc)
                     self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
-                    self.clock += 1
-                    self.timer += 1
+                    self.addClockCycle()
                 case 'ret':
                     self.dMemory.setPCounter(self.stack.pop())
                     self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
-                    self.clock += 1
-                    self.timer += 1
+                    self.addClockCycle()
                 case 'nop':
                     pass
                 case 'retlw':
                     self.dMemory.writeRegister('w', inst[1])
                     self.dMemory.setPCounter(self.stack.pop())
                     self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
-                    self.clock += 1
-                    self.timer += 1
+                    self.addClockCycle()
                 case 'retfie':
                     self.dMemory.setBit(0x0B, 7, 1)
                     self.dMemory.setPCounter(self.stack.pop())
                     self.dMemory.setPCL(self.dMemory.getPCounter() & 0xFF)
-                    self.clock += 1
-                    self.timer += 1
+                    self.addClockCycle()
                     # implementation missing
                 case 'clrf':
                     self.dMemory.writeRegister(inst[1], 0)
@@ -135,8 +160,7 @@ class CPU(QThread):
                     if val == 0: 
                         self.dMemory.incPCL()
                         # self.dMemory.incPCounter()
-                        self.clock += 1
-                        self.timer += 1
+                        self.addClockCycle()
                 case 'decf':
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', self.alu.subWithoutW(self.dMemory.readRegister(inst[1]), 1))
                 case 'decfsz':
@@ -145,15 +169,14 @@ class CPU(QThread):
                     if val == 0: 
                         self.dMemory.incPCL()
                         # self.dMemory.incPCounter()
-                        self.clock += 1
-                        self.timer += 1
+                        self.addClockCycle()
                 case 'swapf':
                     keep = bin(self.dMemory.readRegister(inst[1]))[2:]
                     keep = '0'*(8-len(keep)) + keep
                     low = keep[4:8]
                     high = keep[0:4]
                     new = int('0b' + low + high,2)
-                    self.dMemory.writeRegister(inst[1], new)
+                    self.dMemory.writeRegister(inst[1] if inst[2] else 'w', new)
                 case 'comf':
                     val = self.dMemory.readRegister(inst[1]) ^ 0xFF
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', val)
@@ -179,43 +202,77 @@ class CPU(QThread):
                     if not self.dMemory.getBit(inst[1], inst[2]): 
                         self.dMemory.incPCL()
                         # self.dMemory.incPCounter()
-                        self.clock += 1
-                        self.timer += 1
+                        self.addClockCycle()
                 case 'btfss':
                     if self.dMemory.getBit(inst[1], inst[2]): 
                         self.dMemory.incPCL()
                         # self.dMemory.incPCounter()
-                        self.clock += 1
-                        self.timer += 1
-                # clrwdt, retfie
+                        self.addClockCycle()
+                case 'clrwdt':
+                    self.wdt = 0
+                    self.wdtClock = 0
             if self.dMemory.getPCounter() == len(self.pMemory.memory):
                 break
             # increase timer and counter
-            self.clock += 1
-            self.timer += 1
-            self.t0cs, self.psa, self.scaling = self.dMemory.getPrescaler()
-            if not self.t0cs and not self.psa:
-                try:
-                    if self.clock % self.scaling == 0:
-                        self.dMemory.incTimer0()
-                except: pass
+            self.incTimer()
 
             print("W: " + hex(self.dMemory.getW()))
-            # print("Wert1: " + hex(self.dMemory.readRegister(12)))
-            # print("Wert2: " + hex(self.dMemory.readRegister(13)))
-            # print("FSR: " + hex(self.dMemory.readRegister(4)))
             print("")
-            if self.guiSet: self.updateUI()
+
+            self.checkInt()
+            if self.guiSet != False: self.updateUI()
             # QThread.sleep(0.05)
             sleep(0.05)
 
         keep = self.dMemory.getW()
         print("W: " + hex(keep))
-        # print("Wert1: " + hex(self.dMemory.readRegister(0x0C)))
-        # print("Wert2: " + hex(self.dMemory.readRegister(0x0D)))
-        # print("FSR: " + hex(self.dMemory.readRegister(4)))
         print("Program done!")
         
+    def checkInt(self, gie=True):
+        # check for interrupts
+        intcon = self.dMemory.readRegister(0x0B)
+        if(intcon & 0x80 > 0): #if GIE is set, ints are enabled
+            if(intcon & 0x20 > 0):
+                if(intcon & 0x07 > 0): 
+                    self.dMemory.setBit(0x0B, 7, 0)
+                    self.stack.push(self.dMemory.getPCounter())
+                    self.dMemory.setPCL(4)
+                    self.dMemory.setPCLATH(0)
+                    self.dMemory.setPCounter(4)
+                    self.addClockCycle()
+                    self.addClockCycle()
+            if(intcon & 0x10 > 0):
+                if(self.rb0 != self.dMemory.getBit(0x06, 0, 0) or self.intf != self.dMemory.getBit(0x0B, 1)):
+                    intedge = self.dMemory.getBit(0x01, 6, 1)
+                    trig = False
+                    if((intedge == 1 and (self.rb0 == 0 or self.intf == 0)) or (intedge == 0 and (self.rb0 == 1 or self.intf == 1))):
+                        self.dMemory.setBit(0x0B, 1, 1)
+                        self.dMemory.setBit(0x0B, 7, 0)
+                        self.stack.push(self.dMemory.getPCounter())
+                        self.dMemory.setPCL(4)
+                        self.dMemory.setPCLATH(0)
+                        self.dMemory.setPCounter(4)
+                        self.addClockCycle()
+                        self.addClockCycle()
+                        trig = True
+                    self.rb0 = self.dMemory.getBit(0x06, 0, 0)
+                    self.intf = self.rb0
+                    if not trig:
+                        self.dMemory.setBit(0x0B, 1, self.intf)
+            if(intcon & 0x08 > 0):
+                if(self.rb4 != self.dMemory.getBit(0x06, 4, 0) or self.rb5 != self.dMemory.getBit(0x06, 5, 0) or self.rb6 != self.dMemory.getBit(0x06, 6, 0) or self.rb7 != self.dMemory.getBit(0x06, 7, 0)):
+                    self.dMemory.setBit(0x0B, 0, 1)
+                    self.dMemory.setBit(0x0B, 7, 0)
+                    self.stack.push(self.dMemory.getPCounter())
+                    self.dMemory.setPCL(4)
+                    self.dMemory.setPCLATH(0)
+                    self.dMemory.setPCounter(4)
+                    self.addClockCycle()
+                    self.addClockCycle()
+                    self.rb4 = self.dMemory.getBit(0x06, 4, 0)
+                    self.rb5 = self.dMemory.getBit(0x06, 5, 0)
+                    self.rb6 = self.dMemory.getBit(0x06, 6, 0)
+                    self.rb7 = self.dMemory.getBit(0x06, 7, 0)
 
     def getMemInHex(self):
         hexMem = self.dMemory.memory[0] + self.dMemory.memory[1]
@@ -224,11 +281,56 @@ class CPU(QThread):
             hexMem[i] = int(string, 2)
         return hexMem
     
+    def incTimer(self):
+        self.addClockCycle()
+        self.t0cs, self.psa, self.scaling = self.dMemory.getPrescaler()
+        try:
+            if not self.t0cs and not self.psa:
+                if self.clock % self.scaling == 0:
+                    self.dMemory.incTimer0()
+        except: pass
+
+    def incWDT(self):
+        self.t0cs, self.psa, self.scaling = self.dMemory.getPrescaler()
+        self.wdtClock += 1
+        try:
+            if self.psa:
+                if self.wdtClock % self.scaling == 0:
+                    self.wdt += 1
+            else:
+                self.wdt += 1
+            self.guiSet.WDT_V.setText(QCoreApplication.translate("MainWindow", f'{int(self.wdt/1000)}', None))
+        except: pass
+        self.checkWDT()
+
+    def checkWDT(self):
+        if self.wdt * self.guiSet.executionTime >= 18000:
+            self.wdt = 0
+            self.guiSet.WDT_V.setText(QCoreApplication.translate("MainWindow", f'{int(self.wdt/1000)}', None))
+            self.reset_signal.emit(1)
+            self.reset()
+            self.dMemory.setBit(0x03, 4, 0)
+            if self.sleepOn:
+                self.sleepOn = False
+                self.dMemory.setBit(0x03, 3, 0)
+            # self.pause_signal.emit()
+            # self.pauseThread = True
+            # self.updateUI()
+            
+    def addClockCycle(self):
+        self.timer += 1
+        self.clock += 1
+        if self.dMemory.eewrite:
+            self.eewritetime += 1
+        self.incWDT()
+    
     def getFile(self):
         return self.fileReader.getFile()
     
     def reset(self):
         self.clock = 0
+        self.wdt = 0
+        self.guiSet.WDT_V.setText(QCoreApplication.translate("MainWindow", f'{int(self.wdt/1000)}', None))
         self.dMemory.initialize()
         self.stack.stack = []
         self.pauseThread = True

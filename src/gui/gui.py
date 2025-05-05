@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame,
                                QHBoxLayout, QLabel, QLayout, QLineEdit,
                                QMainWindow, QMenuBar, QPlainTextEdit, QPushButton,
                                QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout,
-                               QWidget, QMenu, QFileDialog, QScrollArea)
+                               QWidget, QMenu, QFileDialog, QScrollArea, QErrorMessage)
 
 class LEDWidget(QWidget):
     def __init__(self, parent=None):
@@ -30,7 +30,8 @@ class LEDWidget(QWidget):
 
     def paintEvent(self, event):
         painter = QPainter(self)
-        led_color = QColor(255, 172, 28) if self.led_state else QColor(194, 24, 8)  # Grün für an, Rot für aus
+        # led_color = QColor(255, 172, 28) if self.led_state else QColor(194, 24, 8)  # Grün für an, Rot für aus
+        led_color = QColor(0, 200, 28) if self.led_state else QColor(194, 24, 8)  # Grün für an, Rot für aus
 
         painter.setBrush(led_color)
         painter.setPen(Qt.NoPen)
@@ -49,20 +50,41 @@ class Ui_MainWindow(QObject):
             self.onReset()
             fileLines, self.codeNumbers = self.cpu.load_program(path) #fileLines, codenumbers
             self.readFileToScrollArea(fileLines)
+        self.onReset()
         self.cpuThread.quit()
         self.cpuThread.start()
         self.updateIntern()
-    @Slot()
-    def onReset(self) -> None:
+    @Slot(int)
+    def onReset(self, wdt = 0) -> None:
         try:
             self.fileLineslst[self.codeNumbers[self.pc]].setStyleSheet("border: 1px solid None;")
             self.fileLineslst[self.codeNumbers[self.lastpcl]].setStyleSheet("border: 1px solid None;")
+            for check in self.breakChecklst:
+                check.setChecked(False)
         except: pass
-        self.cpu.reset()
+        for i in range(8):
+            # update pinA
+            val = 0
+            self.cpu.dMemory.setBit(0x05, i, 0, 0)
+            self.pinalst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.pinalst[7 - i].setDisabled(False)
+            # update pinB
+            self.cpu.dMemory.setBit(0x06, i, 0, 0)
+            self.pinblst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            self.pinblst[7 - i].setDisabled(False)
+            # update led, only set if pin is output???
+            self.ledslst[7 - i].led_state = val
+            self.ledslst[7 - i].update()
+        self.cpu.sleepOn = False
+        if wdt == 0:
+            self.cpu.reset()
         self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
         self.cpu.pauseThread = True
         self.stepin.setDisabled(False)
         self.stepover.setDisabled(False)
+        # if wdt == 1:
+        #     error_dialog = QErrorMessage()
+        #     error_dialog.showMessage('Watchdog Timeout!')
     @Slot()
     def onCPUFinished(self):
         print("CPU execution finished.")
@@ -81,6 +103,14 @@ class Ui_MainWindow(QObject):
             self.cpu.pauseThread = True
             self.stepin.setDisabled(False)
             self.stepover.setDisabled(False)
+    @Slot()
+    def pauseThread(self) -> None:
+        self.go.setText(QCoreApplication.translate("MainWindow", u"Go", None))
+        self.cpu.pauseThread = True
+        self.stepin.setDisabled(False)
+        self.stepover.setDisabled(False)
+        error_dialog = QErrorMessage()
+        error_dialog.showMessage('Watchdog Timeout!')
 
     @Slot()
     def on_text_change(self, idx, text):
@@ -112,11 +142,11 @@ class Ui_MainWindow(QObject):
             if pin == 3:
                 self.cpu.extClk(val)
             self.pinalst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
-            self.cpu.dMemory.setBit(0x05,7 - pin,val)
+            self.cpu.dMemory.setBit(0x05,7 - pin,val, 0)
         elif port == 'b' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
             val = int(self.pinblst[pin].text()) ^ 0x01
             self.pinblst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
-            self.cpu.dMemory.setBit(0x06, 7 - pin, val)
+            self.cpu.dMemory.setBit(0x06, 7 - pin, val, 0)
         elif port == 'status' and 0 <= pin < len(self.pinblst) and self.pinblst[pin] is not None:
             val = int(self.statuslst[pin].text()) ^ 0x01
             self.statuslst[pin].setText(QCoreApplication.translate("MainWindow", str(val), None))
@@ -167,28 +197,42 @@ class Ui_MainWindow(QObject):
         self.Status_V.setText(QCoreApplication.translate("MainWindow", f'{status:02}', None))
         self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{self.pc:04}', None))
         self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", f'{stackP:02}', None))
+        # self.WDT_V.setText(QCoreApplication.translate("MainWindow", f'{self.cpu.wdt/1000:02}', None))
         for i in range(8):
             # update trisA
-            val = self.cpu.dMemory.getBit(0x05, i,1)
+            val = self.cpu.dMemory.getBit(0x05, i, 1)
             self.trisalst[7-i].setText(QCoreApplication.translate("MainWindow", 'i' if (val == 1) else 'o', None))
+            if val == 0:
+                self.pinalst[7-i].setDisabled(True)
+            else:
+                self.pinalst[7-i].setDisabled(False)
             # update trisB
             val = self.cpu.dMemory.getBit(0x06, i, 1)
             self.trisblst[7 - i].setText(QCoreApplication.translate("MainWindow", 'i' if (val == 1) else 'o', None))
+            if val == 0:
+                self.pinblst[7-i].setDisabled(True)
+            else:
+                self.pinblst[7-i].setDisabled(False)
             # update status buttons
-            val = self.cpu.dMemory.getBit(0x03, i)
+            val = self.cpu.dMemory.getBit(0x03, i, 0)
             self.statuslst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
             # update pinA
-            val = self.cpu.dMemory.getBit(0x05, i)
-            self.pinalst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            val = self.cpu.dMemory.getBit(0x05, i, 0)
+            if not self.pinalst[7 - i].isEnabled():
+                self.pinalst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
             # update pinB
-            val = self.cpu.dMemory.getBit(0x06, i)
-            self.pinblst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+            val = self.cpu.dMemory.getBit(0x06, i, 0)
+            if not self.pinblst[7 - i].isEnabled():
+                self.pinblst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
+                # update led, only set if pin is output???
+                self.ledslst[7 - i].led_state = val
+                self.ledslst[7 - i].update()
             # update option reg
             val = self.cpu.dMemory.getBit(0x01, i, 1)
             self.optionlst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
             self.option_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x01, 1), '02X'), None))
             # update intcon reg
-            val = self.cpu.dMemory.getBit(0x0b, i)
+            val = self.cpu.dMemory.getBit(0x0b, i, 0)
             self.intconlst[7 - i].setText(QCoreApplication.translate("MainWindow", str(val), None))
             self.intcon_v.setText(QCoreApplication.translate("MainWindow", format(self.cpu.dMemory.readRegister(0x0b), '02X'), None))
         try:
@@ -206,7 +250,7 @@ class Ui_MainWindow(QObject):
         except: pass
 
     def setupUi(self, MainWindow):
-        self.cpu = CPU(True)
+        self.cpu = CPU(self)
         self.cpuThread = QThread()  # Create a QThread instance
         self.cpu.moveToThread(self.cpuThread)  # Move CPU to the thread
 
@@ -214,6 +258,8 @@ class Ui_MainWindow(QObject):
         self.cpu.update_signal.connect(self.updateUI)
         self.cpu.finished_signal.connect(self.onCPUFinished)
         self.cpuThread.started.connect(self.cpu.execute)
+        self.cpu.reset_signal.connect(self.onReset)
+        self.cpu.pause_signal.connect(self.pauseThread)
 
 
         self.codeNumbers = []
@@ -910,6 +956,7 @@ class Ui_MainWindow(QObject):
         self.EXECINFOS.addLayout(self.EXECTIME)
 
         self.CTRLBTNS = QVBoxLayout()
+        self.CTRLBTNS.setSpacing(10)
         self.CTRLBTNS.setObjectName(u"CTRLBTNS")
         self.stepin = QPushButton(self.horizontalLayoutWidget)
         self.stepin.setObjectName(u"stepin")
@@ -1075,14 +1122,14 @@ class Ui_MainWindow(QObject):
             v.setText(QCoreApplication.translate("MainWindow", u"0000", None))
         for i in range(8):
             self.statuslst[i].setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getBit(0x03,i)), None))
-        self.label_16.setText(QCoreApplication.translate("MainWindow", u"C", None))
-        self.label_9.setText(QCoreApplication.translate("MainWindow", u"TO", None))
-        self.label_14.setText(QCoreApplication.translate("MainWindow", u"Z", None))
-        self.label_2.setText(QCoreApplication.translate("MainWindow", u"IRP", None))
-        self.label_5.setText(QCoreApplication.translate("MainWindow", u"RP0", None))
-        self.label_15.setText(QCoreApplication.translate("MainWindow", u"DC", None))
-        self.label_13.setText(QCoreApplication.translate("MainWindow", u"PD", None))
-        self.label_3.setText(QCoreApplication.translate("MainWindow", u"RP", None))
+        self.label_16.setText(QCoreApplication.translate("MainWindow", u"IRP", None))
+        self.label_9.setText(QCoreApplication.translate("MainWindow", u"RP1", None))
+        self.label_14.setText(QCoreApplication.translate("MainWindow", u"RP0", None))
+        self.label_2.setText(QCoreApplication.translate("MainWindow", u"TO", None))
+        self.label_5.setText(QCoreApplication.translate("MainWindow", u"PD", None))
+        self.label_15.setText(QCoreApplication.translate("MainWindow", u"Z", None))
+        self.label_13.setText(QCoreApplication.translate("MainWindow", u"DC", None))
+        self.label_3.setText(QCoreApplication.translate("MainWindow", u"C", None))
         self.Freq_K.setText(QCoreApplication.translate("MainWindow", u"Quarzfrequenz in MHz", None))
         self.Freq_V.setText(QCoreApplication.translate("MainWindow", str(f"{self.quartFreq:.3f}"), None))
         self.label.setText(QCoreApplication.translate("MainWindow", str(f"{self.executionTime:.3f}") + " us", None))
