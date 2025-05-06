@@ -1,228 +1,79 @@
-\documentclass[a4paper,11pt]{report}
+\documentclass[
+   ngerman
+  ,a4paper
+  ,12pt
+  ,pdftex
+  ,disable
+]{report}
 
-\usepackage{Doku}
+\usepackage[utf8]{inputenc}        
+\usepackage{bericht}
+
+
+\csname endofdump\endcsname
+
+\newcommand{\Kursbezeichnung}{TINF23B3}
+
+
+\newcommand{\Titel}{Dokumentation PIC Simulator}
+\newcommand{\AbgabeDatum}{12. Mai 2025}
+
+\includeonly{
+  abk
+ ,kapitel1‚
+ ,kapitel2
+ ,kapitel3
+ ,changelog
+}
 
 \begin{document}
 
-\begin{titlepage}
-    \centering
-    \vspace*{2cm}
-    
-    \vspace{1.5cm}
-    {\Huge\bfseries\textcolor{primarycolor}{PIC Simulator} \par}
-    \vspace{1cm}
-    {\Large\textbf{Dokumentation} \par}
-    \vspace{3cm}
+\pagenumbering{roman}
 
-    \begin{tabular}{l@{\hspace{2cm}}l}
-        Datum:	                 & 12.05.2025 \\
-        Autoren:	         & Luca Müller \\
-        	                 & Leander Gantert \\
-    \end{tabular}
-    
-    
-    
+\begin{titlepage}
+\begin{center}
+\vspace*{-2cm}
+\hfill\includegraphics[width=4cm]{dhbw-logo}\\[2cm]
+{\Huge \Titel}\\[1.5cm] 
+
+\begin{tabular}{l@{\hspace{2cm}}l}
+Abgabedatum			         & \AbgabeDatum		\\  
+Kurs			         & \Kursbezeichnung		\\
+Autoren	 & Luca Müller		\\
+	        & Leander Gantert		\\
+\end{tabular}
+\end{center}
 \end{titlepage}
 
-\tableofcontents
 
-\chapter{Einleitung}
+\begin{abstract}
+Dieses \LaTeX-Dokument kann als Vorlage für einen Praxis- oder Projektbericht, eine Studien- oder
+Bachelorarbeit dienen.
 
-\section{Über dieses Dokument}
-Dieses Dokument beschreibt einen PIC Simulator, seine Funktionen sowie die Implementierung. Die Dokumentation richtet sich an Benutzer und Entwickler, die den Simulator verstehen möchten.
+\end{abstract}
 
-\section{Projektziele}
-Der PIC Simulator wurde entwickelt, um auch in Abwesenheit von physischer Hardware Programme ausführen zu können. Die Hauptfunktionen umfassen:
-
-\begin{itemize}
-    \item Simulation von PIC-Mikrocontroller-Programmen
-    \item Visualisierung des Programmablaufs
-    \item Debugging-Funktionalitäten
-\end{itemize}
-
-\chapter{Grundlagen}
-
-\section{Grundsätzliche Arbeitsweise eines Simulators}
-
-Ein Simulator ist eine Software, welche das Verhalten eines realen Systems nachbildet. Im Fall eines Mikrocontrollers wie dem PIC wird die Hardwarearchitektur virtuell nachgebildet, um Programme auszuführen. Die grundsätzliche Arbeitsweise eines Simulators im Falle eines PICs umfasst folgende Schritte:
-
-\begin{itemize}
-    \item \textbf{Laden des Programms}: Der Simulator lädt das zu testende Programm, typischerweise in Form einer Assemblerdatei (.LST) 
-    \item \textbf{Dekodieren der Instruktionen}: Jede Instruktion wird analysiert und in eine entsprechende Softwareoperation übersetzt.
-    \item \textbf{Ausführen der Instruktionen}: Die simulierte CPU führt die Instruktionen aus, wobei Speicher, Register und Flags entsprechend aktualisiert werden.
-    \item \textbf{Interaktion mit Peripherie}: Simulierte Peripheriegeräte wie Timer, Interrupts oder I/O-Ports werden entsprechend der Programmlogik angesprochen.
-    \item \textbf{Visualisierung}: Der aktuelle Zustand des Systems wird in der Benutzeroberfläche dargestellt, um den Programmablauf nachvollziehbar zu machen.
-\end{itemize}
-
-\section{Vor- und Nachteile einer Simulation}
-
-Simulationen bieten zahlreiche Vorteile, haben jedoch auch einige Einschränkungen:
-
-\subsection*{Vorteile}
-\begin{itemize}
-    \item \textbf{Kosteneffizienz}: Es wird keine physische Hardware benötigt, was Kosten für Entwicklung und Tests reduziert.
-    \item \textbf{Flexibilität}: Änderungen am Programm oder an der Hardwarekonfiguration können schnell und einfach vorgenommen werden.
-    \item \textbf{Debugging}: Der Simulator ermöglicht detaillierte Einblicke in den Programmablauf, einschließlich Register- und Speicherinhalte.
-    \item \textbf{Sicherheit}: Fehlerhafte Programme können getestet werden, ohne reale Hardware zu beschädigen.
-\end{itemize}
-
-\subsection*{Nachteile}
-\begin{itemize}
-    \item \textbf{Eingeschränkte Genauigkeit}: Timing-kritische Anwendungen oder Hardware-spezifische Eigenschaften können nur begrenzt simuliert werden.
-    \item \textbf{Leistungsanforderungen}: Simulationen können ressourcenintensiv sein und erfordern leistungsfähige Computer.
-    \item \textbf{Abweichungen zur Realität}: Nicht alle Hardwaredetails können exakt nachgebildet werden, was zu Abweichungen im Verhalten führen kann.
-\end{itemize}
-
-\section{Programmoberfläche und deren Handhabung}
-
-Die Benutzeroberfläche eines Simulators ist entscheidend für eine effiziente Nutzung. Sie sollte intuitiv gestaltet sein und alle relevanten Funktionen bereitstellen. Typische Elemente und deren Handhabung umfassen:
-
-\begin{itemize}
-    \item \textbf{Code-Editor}: Ermöglicht das Laden und Bearbeiten von Assemblerdateien. Breakpoints können durch Anklicken der Zeilennummer gesetzt werden.
-    \item \textbf{Steuerelemente}: Buttons wie \texttt{Run}, \texttt{Step In}, \texttt{Step Over} und \texttt{Reset} steuern die Programmausführung.
-    \item \textbf{Register- und Speicheranzeige}: Zeigt den aktuellen Zustand der Register, Flags und des Speichers in Echtzeit an.
-    \item \textbf{I/O-Visualisierung}: Interaktive Darstellung der I/O-Pins, die durch Anklicken manipuliert werden können.
-    \item \textbf{Debugging-Tools}: Funktionen wie das Setzen von Breakpoints, das Überwachen von Variablen und das manuelle Überschreiben von Speicherinhalten erleichtern die Fehlersuche.
-\end{itemize}
-
-Die Kombination dieser Elemente ermöglicht eine effiziente Entwicklung, Analyse und Optimierung von Programmen für Mikrocontroller.
-
-\chapter{Benutzeroberfläche}
-
-Die Benutzeroberfläche des PIC Simulators ist so gestaltet, dass sie eine intuitive und effiziente Nutzung ermöglicht. Im Folgenden werden die wichtigsten Elemente der Benutzeroberfläche und deren Handhabung detailliert beschrieben:
-
-\section{Hauptfenster}
-Das Hauptfenster des Simulators ist in mehrere Bereiche unterteilt, die jeweils spezifische Informationen und Funktionen bereitstellen:
-\begin{itemize}
-    \item \textbf{Code-Editor}: Der integrierte Code-Editor ermöglicht das Laden, Bearbeiten und Speichern von Assemblerdateien. Breakpoints können durch einfaches Anklicken der Zeilennummer gesetzt werden, um den Programmablauf gezielt zu analysieren.
-    \item \textbf{Steuerelemente}: Buttons wie \texttt{Run}, \texttt{Step In}, \texttt{Step Over} und \texttt{Reset} steuern die Programmausführung. Diese Steuerelemente sind übersichtlich angeordnet und leicht zugänglich.
-    \item \textbf{Register- und Speicheranzeige}: Dieser Bereich zeigt den aktuellen Zustand der Register, Flags und des Speichers in Echtzeit an. Änderungen werden sofort visualisiert, um den Programmablauf nachvollziehbar zu machen.
-    \item \textbf{I/O-Visualisierung}: Die I/O-Pins des Mikrocontrollers werden interaktiv dargestellt. Benutzer können die Zustände der Pins durch Anklicken ändern, um verschiedene Szenarien zu simulieren.
-    \item \textbf{Statusleiste}: Die Statusleiste zeigt wichtige Informationen wie den aktuellen Program Counter (PC), den Stackpointer und die Ausführungszeit an.
-\end{itemize}
-
-\section{Menüleiste}
-Die Menüleiste bietet Zugriff auf grundlegende Funktionen des Simulators:
-\begin{itemize}
-    \item \textbf{Datei}: Optionen zum Laden, Speichern und Schließen von Projekten.
-    \item \textbf{Ansicht}: Anpassung der Benutzeroberfläche, z. B. das Ein- oder Ausblenden bestimmter Bereiche.
-    \item \textbf{Hilfe}: Zugriff auf die Dokumentation und Tutorials.
-\end{itemize}
-
-\section{Debugging-Tools}
-Die Benutzeroberfläche enthält leistungsstarke Debugging-Tools, die die Fehlersuche erleichtern:
-\begin{itemize}
-    \item \textbf{Breakpoints}: Benutzer können Breakpoints setzen, um die Programmausführung an bestimmten Stellen zu pausieren und schrittweise fortzusetzen.
-    \item \textbf{Speicherüberwachung}: Der Speicherinhalt kann in Echtzeit überwacht und bei Bedarf manuell geändert werden.
-    \item \textbf{Registeranzeige}: Alle Register des Mikrocontrollers werden angezeigt, einschließlich ihrer aktuellen Werte.
-\end{itemize}
-
-\section{Visualisierung und Interaktivität}
-Die Benutzeroberfläche bietet eine visuelle Darstellung des Mikrocontrollers und seiner Peripherie:
-\begin{itemize}
-    \item \textbf{Simulation von Peripheriegeräten}: Timer, Interrupts und andere Peripheriegeräte können simuliert und überwacht werden.
-    \item \textbf{Echtzeit-Updates}: Änderungen im Programm oder in der Hardwarekonfiguration werden sofort in der Benutzeroberfläche reflektiert.
-    \item \textbf{Interaktive Elemente}: Benutzer können direkt mit der Simulation interagieren, z. B. durch das Ändern von I/O-Pin-Zuständen.
-    \item \textbf{Konfiguration}: Benutzer können die Taktfrequenz des Simulators anpassen.
-\end{itemize}
-
-\section{Zusammenfassung}
-Die Benutzeroberfläche des PIC Simulators kombiniert Funktionalität und Benutzerfreundlichkeit. Sie bietet alle notwendigen Werkzeuge, um Programme effizient zu entwickeln, zu testen und zu debuggen. Durch die klare Struktur und die interaktiven Elemente wird die Arbeit mit dem Simulator erheblich erleichtert.
+\newpage
+\tableofcontents           
+\listoffigures             
+%\listoftables              
+\lstlistoflistings         
 
 
+\include{abk}              
+
+\pagenumbering{arabic}
 
 
-
-
-
-\chapter{Technische Details und Funktionsweise}
-
-\section{Beschreibung des Grundkonzepts}
-Der Simulator bildet die Architektur des Mikrocontrollers nach, einschließlich CPU, Speicher, Register und Peripheriegeräten. Dabei werden alle Befehle des Mikrocontrollers interpretiert und ausgeführt, während der Zustand des Systems in Echtzeit visualisiert wird.
-
-\section{Warum Python gewählt wurde}
-Zur Umsetzung des Projekts wurde Python als Programmiersprache gewählt, da es mehrere Vorteile bietet:
-\begin{itemize}
-    \item \textbf{Einfache Syntax}: Python ermöglicht eine klare und übersichtliche Implementierung, was die Entwicklung erleichtert.
-    \item \textbf{Schnelle Entwicklungszeit}: Dank der hohen Abstraktionsebene können Prototypen schnell erstellt und getestet werden.
-    \item \textbf{Umfangreiche Bibliotheken}: Python bietet zahlreiche Bibliotheken, wie \texttt{PyQt} für die GUI, welche die Entwicklung beschleunigen.
-    \item \textbf{Plattformunabhängigkeit}: Python-Programme können auf verschiedenen Betriebssystemen ausgeführt werden.
-\end{itemize}
-
-\section{Ausführung eines Befehls}
-
-\section{Ausführung eines Befehlszyklus}
-
-Der Befehlszyklus im PIC Simulator folgt einem klar strukturierten Ablauf. Zunächst wird die Assemblerdatei analysiert, und die darin enthaltenen Befehle in ein Array geladen, das als Programmspeicher dient. 
-
-Zu Beginn eines Befehls Zyklus wird überprüft, ob sich der Mikrocontroller im Sleep-Modus befindet, die Ausführung pausiert wurde oder der aktuelle Befehl ignoriert werden soll. Anschließend wird der nächste Befehl aus dem Programmspeicher eingelesen und dekodiert. Der Programmzähler (Program Counter) wird daraufhin inkrementiert, um auf den nächsten Befehl zu zeigen. Basierend auf der Dekodierung wird die entsprechende Funktion ausgeführt, welche den Befehl implementiert und dabei alle relevanten Statusflags (z. B. Carry, Zero) setzt. Nach der Ausführung des Befehls wird die Laufzeit des Programms entsprechend der Befehlslänge inkrementiert. Gleichzeitig wird der Watchdog-Timer erhöht, um dessen Überwachung zu simulieren. Zum Abschluss eines Zyklus werden anstehende Interrupts geprüft und verarbeitet. Schließlich wird die Benutzeroberfläche aktualisiert, um den aktuellen Zustand des Mikrocontrollers visuell darzustellen.
-
-\begin{figure}[h!]
-    \centering
-    \includegraphics[width=0.9\textwidth]{./img/excec_cycle.drawio.pdf}
-    \caption{Programmablauf einer Befehlsausführung}
-    \label{fig:execTask}
-\end{figure}
-
-
-
-
-
-
-\chapter{Fazit}
-
-Nach Abschluss des PIC Simulator-Projekts können wir mit Stolz festhalten, dass alle ursprünglich definierten Anforderungen erfolgreich umgesetzt wurden. Der entwickelte Simulator bietet eine umfassende und benutzerfreundliche Lösung zur Simulation von PIC-Mikrocontroller-Programmen und stellt damit eine wertvolle Alternative zur physischen Hardware dar.
-
-Die zu begin des Projekts definierten Ziele, konnten entsprechend umgesetzt werden. Der PIC Simulator ermöglicht es Entwicklern, Programme zu testen und zu debuggen, ohne auf physische Hardware angewiesen zu sein.
-
-\section{Herausforderungen im Entwicklungsprozess}
-
-Trotz des erfolgreichen Abschlusses des Projekts gab es während der Entwicklung einige nennenswerte Herausforderungen:
-
-\subsection{Integration von UI und Backend}
-
-Eine der größten Herausforderungen war die nahtlose Integration der Benutzeroberfläche mit dem Backend-System. Die Kommunikation zwischen diesen beiden Komponenten erwies sich als komplexer als zunächst angenommen:
-
-\begin{itemize}
-    \item \textbf{Asynchrone Aktualisierungen}: Die Notwendigkeit, die UI in Echtzeit zu aktualisieren, während das Backend die Simulation durchführt, erforderte eine sorgfältige Implementierung von asynchronen Mechanismen.
-    \item \textbf{Datenfluss}: Die effiziente Übertragung von Daten zwischen Backend und Frontend musste optimiert werden, um eine flüssige Benutzererfahrung zu gewährleisten.
-    \item \textbf{Ereignisbehandlung}: Die Verarbeitung von Benutzereingaben und deren korrekte Weiterleitung an das Backend erforderte ein durchdachtes Ereignisbehandlungssystem.
-\end{itemize}
-
-Die Lösung dieser Herausforderungen wurde durch den Einsatz von Python und Qt erreicht, die ein robustes Signal-Slot-System für die Kommunikation zwischen Komponenten bereitstellen.
-
-\subsection{Kontinuierliche Weiterentwicklung}
-
-Ein weiterer anspruchsvoller Aspekt war die kontinuierliche Weiterentwicklung des Projekts. Während der Implementierung entstanden immer wieder neue Anforderungen und Herausforderungen:
-
-\begin{itemize}
-    \item \textbf{Erweiterung der Funktionalität}: Mit fortschreitender Entwicklung wurden zusätzliche Funktionen identifiziert, die integriert werden mussten, ohne die bestehende Codebasis zu beeinträchtigen.
-    \item \textbf{Refactoring und Optimierung}: Um die Wartbarkeit des Codes zu verbessern, waren regelmäßige Refactoring-Maßnahmen erforderlich.
-    \item \textbf{Fehlerbehandlung}: Mit zunehmender Komplexität des Systems musste ein robustes Fehlerbehandlungssystem entwickelt werden, um mit unerwarteten Situationen umgehen zu können.
-    \item \textbf{Leistungsoptimierung}: Die Simulation musste effizient genug sein, um auch komplexe Programme in angemessener Zeit ausführen zu können.
-\end{itemize}
-
-Der modulare Aufbau des Simulators erwies sich hier als entscheidender Vorteil, da er die schrittweise Erweiterung und Anpassung des Systems ermöglichte, ohne die Gesamtstabilität zu gefährden.
-
-\section{Lessons Learned}
-
-Aus diesem Projekt haben wir wertvolle Erkenntnisse gewonnen:
-
-\begin{itemize}
-    \item \textbf{Vorausschauende Planung}: Eine gründliche Anforderungsanalyse und architektonische Planung zu Beginn des Projekts zahlen sich in späteren Phasen aus.
-    \item \textbf{Modularität}: Ein modularer Ansatz ermöglicht flexiblere Anpassungen und Erweiterungen während der Entwicklung.
-    \item \textbf{Testgetriebene Entwicklung}: Regelmäßige Tests sind unerlässlich, um die Funktionalität und Stabilität des Systems zu gewährleisten.
-    \item \textbf{Dokumentation}: Eine umfassende Dokumentation erleichtert die Wartung und Weiterentwicklung des Systems.
-\end{itemize}
-
-
-
+\include{kapitel1}
+\include{kapitel2}
+\include{kapitel3}
 
 
 \appendix
-\chapter{Anhang} 
+\addcontentsline{toc}{chapter}{Anhang}
 
-
+\addcontentsline{toc}{chapter}{Index}
+\printindex
 
 
 \end{document}

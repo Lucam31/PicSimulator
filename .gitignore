@@ -53,3 +53,10 @@ venv.bak/
 *.fls
 *.synctex
 *.run.xml
+*.lot
+*.lol
+*.tdo
+*.lof
+*.for
+*.bib
+*.ist
