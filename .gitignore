@@ -46,7 +46,6 @@ venv.bak/
 *.ind
 *.log
 *.out
-*.pdf
 *.toc
 *.synctex.gz
 *.fdb_latexmk
