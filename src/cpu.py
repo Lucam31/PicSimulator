@@ -26,7 +26,7 @@ class CPU(QThread):
         self.ready = False
         self.stopThread = False
         self.pauseThread = True if gui else False
-        self.clock, self.timer, self.flankeVal, self.flankeClock = 0, 0, 0, 0
+        self.clock, self.timer, self.flankeVal, self.flankeClock, self.clockPre = 0, 0, 0, 0, 0
         self.stepInVar, self.stepOverVar = False, False
         self.flanke = False
         self.t0cs, self.psa, self.scaling = 1, 1, 16
@@ -38,6 +38,10 @@ class CPU(QThread):
         self.rb4, self.rb5, self.rb6, self.rb7 = 0, 0, 0, 0
         self.eewritetime = 0
         self.eewrite = True
+        self.eeprom = []
+        self.eepromFile = os.getcwd() + "/Dateien/eeprom.txt"
+        with open(self.eepromFile, 'r') as file:
+            self.eeprom = file.readlines()
         # self.initialUpdate = True
         
 
@@ -62,12 +66,21 @@ class CPU(QThread):
 
             if self.dMemory.eeread:
                 self.dMemory.eeread = False
-                self.dMemory.writeRegister(0x08, self.dMemory.readRegister(self.dMemory.readRegister(0x09, 0)), 0)
+                # read from eeprom
+                add = self.dMemory.readRegister(0x09, 0)
+                if add < len(self.eeprom) and add >= 0:
+                    self.dMemory.writeRegister(0x08, int(self.eeprom[add].strip(), 16), 0)
+                else:
+                    self.dMemory.writeRegister(0x08, 0, 0)
+                # self.dMemory.writeRegister(0x08, self.dMemory.readRegister(self.dMemory.readRegister(0x09, 0)), 0)
 
             # write to eeprom
             if(self.dMemory.eewrite):
                 if self.eewrite:
-                    self.dMemory.writeRegister(self.dMemory.readRegister(0x09, 0), self.dMemory.readRegister(0x08, 0))
+                    self.eeprom[self.dMemory.readRegister(0x09, 0)] = hex(self.dMemory.readRegister(0x08, 0))[2:].upper() + '\n'
+                    with open(self.eepromFile, 'w') as file:
+                        file.writelines(self.eeprom)
+                    # self.dMemory.writeRegister(self.dMemory.readRegister(0x09, 0), self.dMemory.readRegister(0x08, 0))
                     self.eewrite = False
                 # 1ms delay to write to eeprom
                 if self.eewritetime >= 1000:
@@ -75,6 +88,7 @@ class CPU(QThread):
                     self.dMemory.con55 = False
                     self.dMemory.conAA = False
                     self.eewritetime = 0
+                    self.eewrite = True
                     self.dMemory.setBit(0x08, 4, 1, 1)
 
             if(self.sleepOn):
@@ -82,8 +96,11 @@ class CPU(QThread):
                 if(intcon & 0x38 > 0):
                     if(intcon & 0x07 > 0):
                         self.sleepOn = False
-                self.incWDT()
+                # self.incWDT()
+                self.addClockCycle()
                 self.skip = True
+                self.updateUI()
+                sleep(0.005)
                 continue
             
             if self.skip:
@@ -150,8 +167,10 @@ class CPU(QThread):
                     # implementation missing
                 case 'clrf':
                     self.dMemory.writeRegister(inst[1], 0)
+                    self.dMemory.setBit(0x03, 2, 1)
                 case 'clrw':
                     self.dMemory.writeRegister('w', 0)
+                    self.dMemory.setBit(0x03, 2, 1)
                 case 'incf':
                     self.dMemory.writeRegister(inst[1] if inst[2] else 'w', self.alu.addWithoutW(self.dMemory.readRegister(inst[1]), 1))
                 case 'incfsz':
@@ -214,15 +233,15 @@ class CPU(QThread):
             if self.dMemory.getPCounter() == len(self.pMemory.memory):
                 break
             # increase timer and counter
-            self.incTimer()
+            # self.incTimer()
+            self.addClockCycle()
 
             print("W: " + hex(self.dMemory.getW()))
             print("")
 
             self.checkInt()
             if self.guiSet != False: self.updateUI()
-            # QThread.sleep(0.05)
-            sleep(0.05)
+            sleep(0.005)
 
         keep = self.dMemory.getW()
         print("W: " + hex(keep))
@@ -281,14 +300,6 @@ class CPU(QThread):
             hexMem[i] = int(string, 2)
         return hexMem
     
-    def incTimer(self):
-        self.addClockCycle()
-        self.t0cs, self.psa, self.scaling = self.dMemory.getPrescaler()
-        try:
-            if not self.t0cs and not self.psa:
-                if self.clock % self.scaling == 0:
-                    self.dMemory.incTimer0()
-        except: pass
 
     def incWDT(self):
         self.t0cs, self.psa, self.scaling = self.dMemory.getPrescaler()
@@ -307,8 +318,13 @@ class CPU(QThread):
         if self.wdt * self.guiSet.executionTime >= 18000:
             self.wdt = 0
             self.guiSet.WDT_V.setText(QCoreApplication.translate("MainWindow", f'{int(self.wdt/1000)}', None))
-            self.reset_signal.emit(1)
-            self.reset()
+            if not self.guiSet.WDTACTIVE.isChecked():
+                return
+            # self.reset_signal.emit(1)
+            # self.reset()
+            # self.pauseThread = True
+            # self.dMemory.setPCounter(0)
+            self.dMemory.resetSFR()
             self.dMemory.setBit(0x03, 4, 0)
             if self.sleepOn:
                 self.sleepOn = False
@@ -320,9 +336,16 @@ class CPU(QThread):
     def addClockCycle(self):
         self.timer += 1
         self.clock += 1
+        self.clockPre += 1
         if self.dMemory.eewrite:
             self.eewritetime += 1
         self.incWDT()
+        self.t0cs, self.psa, self.scaling = self.dMemory.getPrescaler()
+        try:
+            if not self.t0cs and not self.psa:
+                if self.clockPre % self.scaling == 0:
+                    self.dMemory.incTimer0()
+        except: pass
     
     def getFile(self):
         return self.fileReader.getFile()
@@ -330,6 +353,12 @@ class CPU(QThread):
     def reset(self):
         self.clock = 0
         self.wdt = 0
+        self.eewritetime = 0
+        self.dMemory.eewrite = False
+        self.dMemory.con55 = False
+        self.dMemory.conAA = False
+        self.dMemory.eeread = False
+        self.eewrite = True
         self.guiSet.WDT_V.setText(QCoreApplication.translate("MainWindow", f'{int(self.wdt/1000)}', None))
         self.dMemory.initialize()
         self.stack.stack = []
