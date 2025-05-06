@@ -1,19 +1,7 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Descr:       LaTeX Style für Vorlage für Berichte der DHBW-Karlsruhe
-%% Author:      Prof. Dr. Jürgen Vollmer, juergen.vollmer@dhbw-karlsruhe.de
-%% $Id: bericht.sty,v 1.25 2020/03/13 15:38:13 vollmer Exp $
-%% -*- coding: utf-8 -*-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%% ACHTUNG, wenn man eine eigene Format-Datei benutzt dann werden Änderungen an bericht.sty
-%% erst wirksam, wenn die Format-Datei neu erzeugt wurde!!!
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesPackage{bericht}[2017/10/06 v1.2]
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% needed packages
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \usepackage[utf8]{inputenc}   % UTF8-Codierung
 \usepackage{babel}      % Sprachanpassungen für generierte Texte wie "Inhaltsverzeichnis" etc
 \usepackage[T1]{fontenc}% Interne LaTeX Codierungen
@@ -35,10 +23,9 @@
 \usepackage{lmodern}    % Computern-Modern Schriftfamilie
 \usepackage{amssymb}    % Symbole
 \usepackage{framed}     % Framed or shaded regions that can break across pages.
-		        % http://dante.ctan.org/tex-archive/help/Catalogue/entries/framed.html
-			% Benutzung siehe erklaerung.tex
-
 \usepackage{wrapfig}    % Bilder von textumfliessen lassen
+\usepackage{float}      % http://www.ctan.org/tex-archive/macros/latex/contrib/float/
+\usepackage{listings}
 
 \usepackage[colorinlistoftodos]{todonotes}
                         % Einfache Verwaltung und Erstellung von TODO's Markierungen
@@ -47,6 +34,34 @@
 
 \usepackage{makeidx}    % Erstellung eines Indexes
 \makeindex
+
+
+
+\lstdefinestyle{pythonCode}{
+  language=Python,
+  basicstyle=\ttfamily\small,    % Schriftart und -größe für den Code
+  numbers=left,                  % Zeilennummern links
+  numberstyle=\tiny\color{gray}, % Stil der Zeilennummern
+  numbersep=10pt,                % Abstand der Nummern zum Code
+  tabsize=4,                     % Tabulatorbreite
+  extendedchars=true,            % Erlaubt erweiterte Zeichen
+  breaklines=true,               % Automatische Zeilenumbrüche
+  keywordstyle=\color{blue}\bfseries,       % Stil für Schlüsselwörter
+  identifierstyle=\color{black}, % Stil für Bezeichner
+  commentstyle=\color{ForestGreen}\itshape,    % Stil für Kommentare
+  stringstyle=\color{Red},       % Stil für Strings
+  showstringspaces=false,        % Leerzeichen in Strings nicht besonders hervorheben
+  showtabs=false,                % Tabs nicht besonders hervorheben
+  frame=single,                  % Rahmen um den Codeblock
+  rulecolor=\color{black},       % Farbe des Rahmens
+  captionpos=b,                  % Position der Überschrift (bottom)
+  backgroundcolor=\color{white}, % Hintergrundfarbe
+  morekeywords={self, True, False, None}, % Zusätzliche Python Keywords
+  emph={class, def, for, while, if, elif, else, try, except, finally, with, return, import, from, as, pass, break, continue, global, nonlocal, yield, lambda, assert, del, in, is, not, or, and, print}, % Keywords hervorheben
+  emphstyle=\color{magenta}\bfseries, % Stil für hervorgehobene Keywords
+}
+
+\lstset{style=pythonCode} % Setzt den Stil für alle Listings
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% eigene Macros
@@ -155,7 +170,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Programmlistings setzen
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\usepackage{listings}   % http://www.ctan.org/tex-archive/macros/latex/contrib/listings/
+
 
 % Wie sollen die Überschriften benannt werden:
 \renewcommand{\lstlistingname}{Algorithmus}

@@ -1,32 +1,31 @@
 \chapter{Fazit}
 
-Nach Abschluss des PIC Simulator-Projekts können wir mit Stolz festhalten, dass alle ursprünglich definierten Anforderungen erfolgreich umgesetzt wurden. Der entwickelte Simulator bietet eine umfassende und benutzerfreundliche Lösung zur Simulation von PIC-Mikrocontroller-Programmen und stellt damit eine wertvolle Alternative zur physischen Hardware dar.
+Nach Abschluss des PIC Simulator-Projekts können wir mit Stolz festhalten, dass alle ursprünglich definierten Anforderungen erfolgreich umgesetzt wurden. 
 
-Die zu begin des Projekts definierten Ziele, konnten entsprechend umgesetzt werden. Der PIC Simulator ermöglicht es Entwicklern, Programme zu testen und zu debuggen, ohne auf physische Hardware angewiesen zu sein.
+Der entwickelte Simulator bietet eine umfassende und benutzerfreundliche Lösung zur Simulation von PIC-Mikrocontroller-Programmen und stellt damit eine wertvolle Alternative zur physischen Hardware dar. Folglich konnten die zu begin des Projekts definierten Ziele entsprechend umgesetzt werden. Der PIC Simulator ermöglicht es Entwicklern, Programme zu testen und zu debuggen, ohne auf physische Hardware angewiesen zu sein.
 
 \section{Herausforderungen im Entwicklungsprozess}
 
-Trotz des erfolgreichen Abschlusses des Projekts gab es während der Entwicklung einige nennenswerte Herausforderungen:
+Trotz des erfolgreichen Abschlusses des Projekts gab es während der Entwicklung einige Herausforderungen:
 
 \subsection{Integration von UI und Backend}
 
-Eine der größten Herausforderungen war die nahtlose Integration der Benutzeroberfläche mit dem Backend-System. Die Kommunikation zwischen diesen beiden Komponenten erwies sich als komplexer als zunächst angenommen:
+Eine der größten Herausforderungen war die nahtlose Integration der Benutzeroberfläche mit dem Backend. Die konstante Kommunikation zwischen diesen beiden Komponenten erwies sich als komplexer als zunächst angenommen:
 
 \begin{itemize}
     \item \textbf{Asynchrone Aktualisierungen}: Die Notwendigkeit, die UI in Echtzeit zu aktualisieren, während das Backend die Simulation durchführt, erforderte eine sorgfältige Implementierung von asynchronen Mechanismen.
-    \item \textbf{Datenfluss}: Die effiziente Übertragung von Daten zwischen Backend und Frontend musste optimiert werden, um eine flüssige Benutzererfahrung zu gewährleisten.
-    \item \textbf{Ereignisbehandlung}: Die Verarbeitung von Benutzereingaben und deren korrekte Weiterleitung an das Backend erforderte ein durchdachtes Ereignisbehandlungssystem.
+    \item \textbf{Datenfluss}: Die effiziente Übertragung von Daten zwischen Backend und Frontend musste optimiert werden, um nicht unnötig Ressourcen zu verbrauchen.
+    \item \textbf{Ereignisbehandlung}: Die Verarbeitung von Benutzereingaben und deren korrekte Weiterleitung an die enstprechenden Backend Komponenten erfordete eine detailierte Einarbeitung in das Signal-Slot-System von Qt.
 \end{itemize}
 
-Die Lösung dieser Herausforderungen wurde durch den Einsatz von Python und Qt erreicht, die ein robustes Signal-Slot-System für die Kommunikation zwischen Komponenten bereitstellen.
+Die Lösung dieser Herausforderungen wurde durch den Einsatz von Python und Qt erreicht, die ein robustes Signal-Slot-System für die Kommunikation zwischen den Komponenten bereitstellen.
 
 \subsection{Kontinuierliche Weiterentwicklung}
 
 Ein weiterer anspruchsvoller Aspekt war die kontinuierliche Weiterentwicklung des Projekts. Während der Implementierung entstanden immer wieder neue Anforderungen und Herausforderungen:
 
 \begin{itemize}
-    \item \textbf{Erweiterung der Funktionalität}: Mit fortschreitender Entwicklung wurden zusätzliche Funktionen identifiziert, die integriert werden mussten, ohne die bestehende Codebasis zu beeinträchtigen.
-    \item \textbf{Refactoring und Optimierung}: Um die Wartbarkeit des Codes zu verbessern, waren regelmäßige Refactoring-Maßnahmen erforderlich.
+    \item \textbf{Erweiterung der Funktionalität}: Mit fortschreitender Entwicklung wurden zusätzliche Funktionen identifiziert, die integriert werden mussten, ohne die bestehende Codebasis zu beeinträchtigen. Teilweise mussten bestehende Module umgeschrieben werden, um neue Funktionalitäten zu unterstützen.
     \item \textbf{Fehlerbehandlung}: Mit zunehmender Komplexität des Systems musste ein robustes Fehlerbehandlungssystem entwickelt werden, um mit unerwarteten Situationen umgehen zu können.
     \item \textbf{Leistungsoptimierung}: Die Simulation musste effizient genug sein, um auch komplexe Programme in angemessener Zeit ausführen zu können.
 \end{itemize}
@@ -39,8 +38,7 @@ Aus diesem Projekt haben wir wertvolle Erkenntnisse gewonnen:
 
 \begin{itemize}
     \item \textbf{Vorausschauende Planung}: Eine gründliche Anforderungsanalyse und architektonische Planung zu Beginn des Projekts zahlen sich in späteren Phasen aus.
-    \item \textbf{Modularität}: Ein modularer Ansatz ermöglicht flexiblere Anpassungen und Erweiterungen während der Entwicklung.
-    \item \textbf{Testgetriebene Entwicklung}: Regelmäßige Tests sind unerlässlich, um die Funktionalität und Stabilität des Systems zu gewährleisten.
+    \item \textbf{Modularität}: Ein modularer Ansatz ermöglicht flexiblere Anpassungen und Erweiterungen während der Entwicklung. 
     \item \textbf{Dokumentation}: Eine umfassende Dokumentation erleichtert die Wartung und Weiterentwicklung des Systems.
 \end{itemize}
 
