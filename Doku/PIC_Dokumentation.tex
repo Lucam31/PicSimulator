@@ -1,284 +1,73 @@
-\documentclass[a4paper,11pt]{report}
+\documentclass[
+   ngerman
+  ,a4paper
+  ,12pt
+  ,pdftex
+  ,disable
+]{report}
 
-\usepackage{Doku}
+\usepackage[utf8]{inputenc}        
+\usepackage{bericht}
+
+
+\csname endofdump\endcsname
+
+\newcommand{\Kursbezeichnung}{TINF23B3}
+
+
+\newcommand{\Titel}{Dokumentation PIC Simulator}
+\newcommand{\AbgabeDatum}{12. Mai 2025}
+
+\includeonly{
+  abk
+ ,kapitel1
+ ,kapitel2
+ ,kapitel3
+ ,changelog
+}
 
 \begin{document}
 
-\begin{titlepage}
-    \centering
-    \vspace*{2cm}
-    
-    \vspace{1.5cm}
-    {\Huge\bfseries\textcolor{primarycolor}{PIC Simulator} \par}
-    \vspace{1cm}
-    {\Large\textbf{Software-Dokumentation} \par}
-    \vspace{3cm}
+\pagenumbering{roman}
 
-    \begin{tabular}{l@{\hspace{2cm}}l}
-        Projektnamen:	         & PIC Simulator \\
-        Datum:	                 & 12.05.2025 \\
-    \end{tabular}
-    
-    \vspace{3cm}
-    
-    \begin{tabular}{l@{\hspace{2cm}}l}
-        Autoren:	         & Luca Müller \\
-        	                 & Leander Gantert \\
-    \end{tabular}
-    
-    
-    
+\begin{titlepage}
+\begin{center}
+\vspace*{-2cm}
+\hfill\includegraphics[width=4cm]{dhbw-logo}\\[2cm]
+{\Huge \Titel}\\[1.5cm] 
+
+\begin{tabular}{l@{\hspace{2cm}}l}
+Abgabedatum			         & \AbgabeDatum		\\  
+Kurs			         & \Kursbezeichnung		\\
+Autoren	 & Luca Müller		\\
+	        & Leander Gantert		\\
+\end{tabular}
+\end{center}
 \end{titlepage}
 
-\chapter{Einleitung}
 
-\section{Über dieses Dokument}
-Dieses Dokument beschreibt den PIC Simulator, seine Funktionen, Implementierung und Nutzung. Die Dokumentation richtet sich an Benutzer und Entwickler, die den Simulator verstehen und erweitern möchten.
+\newpage
+\tableofcontents           
+\listoffigures             
+%\listoftables              
+\lstlistoflistings         
 
-\section{Projektziele}
-Der PIC Simulator wurde entwickelt, um [Ziele des Projekts hier einfügen]. Die Hauptfunktionen umfassen:
 
-\begin{itemize}
-    \item Simulation von PIC-Mikrocontroller-Programmen
-    \item Visualisierung des Programmablaufs
-    \item Debugging-Funktionalitäten
-    \item [Weitere Funktionen hier ergänzen]
-\end{itemize}
+\include{abk}              
 
-\chapter{Systemarchitektur}
+\pagenumbering{arabic}
 
-\section{Überblick}
-Die Architektur des PIC Simulators basiert auf [Architekturprinzipien beschreiben]. Das System besteht aus folgenden Hauptkomponenten:
 
-\begin{itemize}
-    \item Kernkomponente: Verantwortlich für die Simulation des PIC-Prozessors
-    \item Benutzeroberfläche: Ermöglicht die Interaktion mit dem Simulator
-    \item Speichermodell: Simuliert den Speicher des Mikrocontrollers
-    \item Arithmetisch-logische Einheit (ALU): Führt arithmetische und logische Operationen aus
-    \item Decoder: Interpretiert die PIC-Befehlscodierung und übersetzt sie in ausführbare Operationen
-    \item File-Reader: Liest und interpretiert PIC-Assemblerdateien
-    \item Stack: Implementiert den Aufrufstack für Unterprogramme und Interruptbehandlung
-\end{itemize}
+\include{kapitel1}
+\include{kapitel2}
+\include{kapitel3}
 
-\section{Komponenten-Diagramm}
-Das folgende Diagramm zeigt die Hauptkomponenten des PIC-Simulators und ihre Beziehungen zueinander:
 
-\begin{figure}[h]
-\centering
-\begin{verbatim}
-+----------------+      +----------------+      +----------------+
-|      GUI       |<---->|      CPU       |<---->|    Decoder     |
-+----------------+      +----------------+      +----------------+
-                             ^    ^
-                             |    |
-                             v    v
-+----------------+      +----------------+      +----------------+
-|  DataMemory    |<---->|     ALU       |<---->| ProgramMemory  |
-+----------------+      +----------------+      +----------------+
-        ^
-        |
-        v
-+----------------+      +----------------+
-|     Stack      |      |  FileReader   |
-+----------------+      +----------------+
-\end{verbatim}
-\caption{Komponentendiagramm des PIC-Simulators}
-\end{figure}
+\appendix
+\addcontentsline{toc}{chapter}{Anhang}
 
-\chapter{Softwarearchitektur}
+\addcontentsline{toc}{chapter}{Index}
+\printindex
 
-\section{Klassenstruktur}
-Das Projekt folgt einer objektorientierten Architektur und besteht aus folgenden Hauptklassen:
-
-\begin{itemize}
-    \item \textbf{CPU}: Zentrale Komponente, die den PIC-Prozessor simuliert und die Programmausführung steuert
-    \item \textbf{ALU}: Implementiert arithmetische und logische Operationen wie Addition, Subtraktion und bitweise Operationen
-    \item \textbf{DataMemory}: Simuliert den Datenspeicher des PIC einschließlich der Speziellen Funktionsregister (SFR)
-    \item \textbf{ProgramMemory}: Speichert und verwaltet das auszuführende Programm
-    \item \textbf{Stack}: Implementiert den Hardwarestack für Unterprogrammaufrufe
-    \item \textbf{Decoder}: Dekodiert die PIC-Instruktionen in ausführbare Operationen
-    \item \textbf{FileReader}: Liest und interpretiert Assemblerdateien
-    \item \textbf{MainWindow \& Ui\_MainWindow}: Implementieren die grafische Benutzeroberfläche
-\end{itemize}
-
-\section{Flussdiagramm der Programmausführung}
-Die Ausführungslogik des Simulators folgt diesem grundlegenden Ablauf:
-
-\begin{enumerate}
-    \item Laden der Assemblerdatei durch den FileReader
-    \item Dekodieren der Instruktionen durch den Decoder
-    \item Schrittweise Ausführung im CPU-Hauptzyklus:
-        \begin{itemize}
-            \item Abrufen der nächsten Instruktion
-            \item Dekodieren der Instruktion
-            \item Ausführen der Operation (ALU oder andere)
-            \item Aktualisieren der Register und Flags
-            \item Inkrementieren des Programmzählers
-        \end{itemize}
-    \item Aktualisieren der Benutzeroberfläche nach jedem Schritt
-\end{enumerate}
-
-\chapter{Komponenten im Detail}
-
-\section{CPU}
-Die CPU-Klasse bildet das Herzstück des Simulators und implementiert die folgenden Funktionalitäten:
-
-\begin{itemize}
-    \item Programmladelogik mittels FileReader
-    \item Hauptausführungsschleife mit Instruktionsabruf und -ausführung
-    \item Unterstützung für Debugging-Funktionen (Step-In, Step-Over)
-    \item Timer- und Interrupt-Behandlung
-    \item Signalisierung zur GUI-Aktualisierung
-\end{itemize}
-
-Der Programmzähler wird entsprechend der PIC-Architektur verwaltet, mit Unterstützung für Sprünge, Aufrufe und Rücksprünge.
-
-\section{Speichermodell}
-Das Speichermodell des PIC-Simulators implementiert die typischen Speicherbereiche eines PIC-Mikrocontrollers:
-
-\begin{itemize}
-    \item \textbf{Bank 0 \& Bank 1}: Die beiden Speicherbänke mit jeweils 128 Byte
-    \item \textbf{Spezielle Funktionsregister (SFR)}: Register für spezielle Funktionen wie STATUS, FSR, PCL, PCLATH
-    \item \textbf{W-Register (WREG)}: Arbeitsregister für arithmetische und logische Operationen
-\end{itemize}
-
-Gespiegelte Register wie STATUS, PCL und INTCON werden in beiden Bänken synchronisiert, um das Verhalten des echten PIC nachzubilden.
-
-\section{ALU}
-Die Arithmetisch-Logische Einheit führt mathematische und logische Operationen aus:
-
-\begin{itemize}
-    \item Arithmetische Operationen: add, sub, inc, dec
-    \item Logische Operationen: and, or, xor, complement
-    \item Bit-Operationen: set, clear, test, rotate
-\end{itemize}
-
-Die ALU aktualisiert entsprechend der ausgeführten Operationen auch die Statusbits wie Zero, Carry und Digit Carry im STATUS-Register.
-
-\section{Benutzeroberfläche}
-Die GUI des Simulators bietet umfangreiche Funktionalitäten zur Interaktion mit dem simulierten PIC:
-
-\begin{itemize}
-    \item Anzeige und Bearbeitung des Speicherinhalts
-    \item Visualisierung des Programmablaufs mit Hervorhebung der aktuellen Zeile
-    \item Steuerelemente für die Programmausführung (Run, Step, Reset)
-    \item Anzeige und Manipulation von SFRs und Flags
-    \item Visualisierung der I/O-Ports mit interaktiven Pins
-    \item Breakpoint-Unterstützung für das Debugging
-\end{itemize}
-
-Die GUI wurde mit PySide6 (Qt für Python) implementiert und nutzt ein Signal-Slot-System zur Kommunikation mit dem simulierten PIC.
-
-\chapter{Unterstützte PIC-Befehle}
-
-\section{Befehlssatz}
-Der Simulator unterstützt den grundlegenden Befehlssatz des PIC16F84A, darunter:
-
-\begin{itemize}
-    \item \textbf{Datenübertragung}: movwf, movf, movlw
-    \item \textbf{Arithmetik}: addwf, sublw, subwf, incf, decf
-    \item \textbf{Logische Operationen}: andwf, iorwf, xorwf, comf
-    \item \textbf{Bit-Operationen}: bcf, bsf, btfsc, btfss
-    \item \textbf{Unterprogramme}: call, return, retlw, retfie
-    \item \textbf{Sprünge}: goto
-    \item \textbf{Systemsteuerung}: clrwdt, sleep, nop
-\end{itemize}
-
-\section{Interrupt-Behandlung}
-Der Simulator implementiert die Interrupt-Mechanismen des PIC:
-
-\begin{itemize}
-    \item Externe Interrupts über RB0/INT
-    \item Timer0-Überlauf-Interrupts
-    \item Port-B Änderungs-Interrupts
-    \item Interrupt-Prioritätssteuerung über das INTCON-Register
-\end{itemize}
-
-\chapter{Implementierungsdetails}
-
-\section{Multithreading}
-Der Simulator nutzt Multithreading, um eine responsive Benutzeroberfläche zu gewährleisten:
-
-\begin{itemize}
-    \item Die CPU läuft in einem separaten Thread
-    \item Signal-Slot-Mechanismus für die Thread-übergreifende Kommunikation
-    \item Synchronisationsmechanismen für das Debugging (Pause, Step)
-\end{itemize}
-
-\section{Timing-Simulation}
-Die Zeitsimulation basiert auf einer konfigurierbaren Taktfrequenz:
-
-\begin{itemize}
-    \item Simulation der Instruktionszyklen
-    \item Timer0 mit konfigurierbaren Prescaler-Einstellungen
-    \item Unterstützung für externe Taktquellen
-\end{itemize}
-
-\chapter{Benutzerhandbuch}
-
-\section{Installation und Ausführung}
-Um den PIC-Simulator zu starten:
-
-\begin{enumerate}
-    \item Stellen Sie sicher, dass Python 3.x und die erforderlichen Abhängigkeiten installiert sind
-    \item Installieren Sie die benötigten Bibliotheken: \texttt{pip install -r requirements.txt}
-    \item Starten Sie den Simulator mit: \texttt{python -m src}
-\end{enumerate}
-
-\section{Laden und Ausführen von Programmen}
-So arbeiten Sie mit dem Simulator:
-
-\begin{enumerate}
-    \item Öffnen Sie eine .LST-Assemblerdatei über das Menü
-    \item Verwenden Sie die Steuerelemente (Go, Step In, Step Over) zur Programmausführung
-    \item Beobachten Sie Register, Speicher und I/O in Echtzeit
-    \item Setzen Sie Breakpoints durch Anklicken der Zeilen im Codebereich
-    \item Manipulieren Sie Pins durch Anklicken der entsprechenden Buttons
-\end{enumerate}
-
-\section{Debugging-Funktionen}
-Der Simulator bietet verschiedene Debugging-Tools:
-
-\begin{itemize}
-    \item Schrittweise Ausführung (Step In, Step Over)
-    \item Breakpoints an beliebigen Programmzeilen
-    \item Echtzeit-Überwachung aller Register und des Speichers
-    \item Manuelles Überschreiben von Speicherinhalten zur Laufzeit
-\end{itemize}
-
-\chapter{Ausblick und Erweiterungen}
-
-\section{Mögliche Erweiterungen}
-Für zukünftige Versionen sind folgende Erweiterungen denkbar:
-
-\begin{itemize}
-    \item Unterstützung weiterer PIC-Modelle (16F87x, 18F-Serie)
-    \item Integrierter Assembler für die direkte Codeerstellung
-    \item Erweiterte Hardware-Simulation (serielle Schnittstellen, ADC, PWM)
-    \item Oszilloskop-Funktion zur Visualisierung von Signalen
-    \item Exportfunktion für Simulationsergebnisse
-\end{itemize}
-
-\section{Bekannte Einschränkungen}
-Der aktuelle Simulator hat folgende Einschränkungen:
-
-\begin{itemize}
-    \item Kein vollständiger EEPROM-Support
-    \item Begrenzte Simulation von Timing-kritischen Anwendungen
-    \item Kein Power-Management für Sleep-Modi
-    \item Eingeschränkte Hardware-Simulation für spezielle Peripherie
-\end{itemize}
-
-\chapter{Testprogramme}
-
-\section{Verfügbare Testprogramme}
-Der Simulator wird mit verschiedenen Testprogrammen ausgeliefert:
-
-\begin{itemize}
-    \item TPicSim1-15: Grundlegende Tests für verschiedene Befehle
-    \item TPicSim101: Erweiterter Test für komplexere Operationen
-\end{itemize}
-
-Diese Programme können zum Testen der Simulatorfunktionalität und als Beispiele für eigene Programmierung verwendet werden.
 
 \end{document}

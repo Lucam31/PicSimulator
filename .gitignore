@@ -46,10 +46,16 @@ venv.bak/
 *.ind
 *.log
 *.out
-*.pdf
 *.toc
 *.synctex.gz
 *.fdb_latexmk
 *.fls
 *.synctex
 *.run.xml
+*.lot
+*.lol
+*.tdo
+*.lof
+*.for
+*.bib
+*.ist
