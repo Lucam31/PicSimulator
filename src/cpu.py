@@ -100,7 +100,7 @@ class CPU(QThread):
                 self.addClockCycle()
                 self.skip = True
                 self.updateUI()
-                sleep(0.005)
+                sleep(0.001)
                 continue
             
             if self.skip:
@@ -324,11 +324,17 @@ class CPU(QThread):
             # self.reset()
             # self.pauseThread = True
             # self.dMemory.setPCounter(0)
-            self.dMemory.resetSFR()
-            self.dMemory.setBit(0x03, 4, 0)
             if self.sleepOn:
+                self.dMemory.writeRegister(0x03, self.dMemory.readRegister(0x03) & 0xE7)
                 self.sleepOn = False
-                self.dMemory.setBit(0x03, 3, 0)
+                self.dMemory.incPCL()
+            else:
+                self.dMemory.resetSFR()
+                self.dMemory.writeRegister(0x03, self.dMemory.readRegister(0x03) & 0x07)
+                self.dMemory.setBit(0x03, 3, 1)
+                self.dMemory.setPCounter(0)
+                self.dMemory.setPCL(0)
+                self.dMemory.setPCLATH(0)
             # self.pause_signal.emit()
             # self.pauseThread = True
             # self.updateUI()

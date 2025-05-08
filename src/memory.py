@@ -222,9 +222,6 @@ class DataMemory:
         self.memory[0][1] = [int(char) for char in string]
 
     def resetSFR(self):
-        self.setPCounter(0)
-        self.setPCL(0)
-        self.setPCLATH(0)
         self.con55 = False
         self.conAA = False
         self.eewrite = False
