@@ -6,13 +6,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from cpu import CPU
 
 from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-                            QMetaObject, QObject, QPoint, QRect,
+                            QMetaObject, QObject, QPoint, QRect, QRegularExpression,
                             QSize, QTime, QUrl, Qt, Slot, SLOT, QTimer, Q_ARG, QGenericArgument)
 from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-                           QFont, QFontDatabase, QGradient, QIcon,
+                           QFont, QFontDatabase, QGradient, QIcon, QRegularExpressionValidator,
                            QImage, QKeySequence, QLinearGradient, QPainter,
                            QPalette, QPixmap, QRadialGradient, QTransform, QAction, QDesktopServices)
-from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame,
+from PySide6.QtWidgets import (QApplication, QCheckBox, QFrame, 
                                QHBoxLayout, QLabel, QLayout, QLineEdit,
                                QMainWindow, QMenuBar, QPlainTextEdit, QPushButton,
                                QSizePolicy, QSpacerItem, QStatusBar, QVBoxLayout,
@@ -114,12 +114,18 @@ class Ui_MainWindow(QObject):
 
     @Slot()
     def on_text_change(self, idx, text):
+        if text == "":
+            text = "00"
+        if len(text) < 2:
+            text = "0" + text
+        textUpper = text.upper()
         try:
             if idx < 128:
-                self.cpu.dMemory.writeRegister(idx, int(text, 16), 0)
+                self.cpu.dMemory.writeRegister(idx, int(textUpper, 16), 0)
             else:
-                self.cpu.dMemory.writeRegister(idx, int(text, 16), 1)
+                self.cpu.dMemory.writeRegister(idx-127, int(textUpper, 16), 1)
         except: pass
+        self.memorycells[idx].setText(QCoreApplication.translate("MainWindow", textUpper, None))
         self.memorycells[idx].clearFocus()
     @Slot()
     def change_execution_time(self):
@@ -191,12 +197,12 @@ class Ui_MainWindow(QObject):
             self.stacklst[7-i].setText(QCoreApplication.translate("MainWindow", f'{stackContent[i]:04}', None))
         self.VT_V.setText(QCoreApplication.translate("MainWindow", str(self.cpu.dMemory.getPrescaler()[2]), None))
         fsr, pcl, self.lastpcl, pclath, self.pc, status, stackP = self.cpu.getUiInfo()
-        self.FSR_V.setText(QCoreApplication.translate("MainWindow", f'{fsr:02}', None))
-        self.PCL_V.setText(QCoreApplication.translate("MainWindow", f'{pcl:02}', None))
-        self.PCLATH_V.setText(QCoreApplication.translate("MainWindow", f'{pclath:02}', None))
+        self.FSR_V.setText(QCoreApplication.translate("MainWindow", format(fsr, '02X'), None))
+        self.PCL_V.setText(QCoreApplication.translate("MainWindow", format(pcl, '02X'), None))
+        self.PCLATH_V.setText(QCoreApplication.translate("MainWindow", format(pclath, '02X'), None))
         self.Status_V.setText(QCoreApplication.translate("MainWindow", f'{status:02}', None))
-        self.PC_V.setText(QCoreApplication.translate("MainWindow", f'{self.pc:04}', None))
-        self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", f'{stackP:02}', None))
+        self.PC_V.setText(QCoreApplication.translate("MainWindow", format(self.pc, '04X'), None))
+        self.Stackpointer_V.setText(QCoreApplication.translate("MainWindow", format(stackP, '02X'), None))
         # self.WDT_V.setText(QCoreApplication.translate("MainWindow", f'{self.cpu.wdt/1000:02}', None))
         for i in range(8):
             # update trisA
@@ -356,6 +362,8 @@ class Ui_MainWindow(QObject):
 
         self.index = [QLineEdit] * 32
         self.memorycells = [QLineEdit] * 256
+        m_Validator = QRegularExpressionValidator(self.centralwidget)
+        m_Validator.setRegularExpression( QRegularExpression(  "[a-fA-F0-9]{0,2}" ) )
         for i in range(32):
             MEM_LINE = QHBoxLayout()
             MEM_LINE.setSpacing(0)
@@ -369,7 +377,8 @@ class Ui_MainWindow(QObject):
                 self.memorycells[j + 8 * i] = QLineEdit(self.verticalLayoutWidget)
                 self.memorycells[j + 8 * i].setAlignment(Qt.AlignmentFlag.AlignCenter)
                 self.memorycells[j + 8 * i].setReadOnly(False)
-                self.memorycells[j + 8 * i].returnPressed.connect(lambda text, idx=j + 8 * i: self.on_text_change(idx, text))
+                self.memorycells[j + 8 * i].setValidator(m_Validator)
+                self.memorycells[j + 8 * i].returnPressed.connect(lambda idx=j + 8 * i: self.on_text_change(idx, self.memorycells[idx].text()))
 
                 MEM_LINE.addWidget(self.memorycells[j + 8 * i])
 
@@ -1172,7 +1181,7 @@ class Ui_MainWindow(QObject):
     # retranslateUi
 
     def open_documentation(self):
-        doc_url = QUrl.fromLocalFile(os.getcwd() + "/Dateien/Bewertungsschema_Simulator_DHBW_HSO_2024.pdf")
+        doc_url = QUrl.fromLocalFile(os.getcwd() + "/Doku/PIC_Dokumentation.pdf")
         QDesktopServices.openUrl(doc_url)
 
     def updateIntern(self):

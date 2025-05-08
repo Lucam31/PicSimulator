@@ -221,6 +221,13 @@ class DataMemory:
         string = ('0'*(8-len(test))) + test
         self.memory[0][1] = [int(char) for char in string]
 
+    def resetSFR(self):
+        self.con55 = False
+        self.conAA = False
+        self.eewrite = False
+        self.eeread = False
+        self.initBank0()
+        self.initBank1()
 
 class ProgramMemory:
     def __init__(self):

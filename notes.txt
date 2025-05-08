@@ -43,6 +43,11 @@ psa 0 tmr0 vt, 1 wdt vt
 
 wenn vt neu beschrieben wdt resetten
 
+eeprom schreiben extra speicher, mit ff initialisieren, 64 byte
+
+nach wd reset sfr resetten und pc auf 0, speicher lassen
+sleep programm wdt
+
 
 TODO:
 - WDT (WD active??)
@@ -54,7 +59,7 @@ TODO:
 - Lauflicht und Leuchtband
 - IO-Ausgangslatch (PORTS auf Ein-/Ausgang setzen)
 - Doku schreiben
-- Fragen nach Punkteverteilung (Lehmann du Unhold, dein Wissen enthältst du uns, um Qual und Schrecken zu erregen. Mein Leid war groß in der letzten Hälfte des letzten Jahres, doch die Ausmaße deiner Schreckensherrschaft werden erst jetzt deutlich. Unwissenheit und Verzweiflung sind wie süßer Honig für dich. Mit bohrenden Blicken säst du Verunsicherung in unseren Herzen. Unwohlsein ist der Preis für die Teilnahme an der Folter, die du Pic Simulator nennst. Auf ewig soll mir das Leid in deiner Obhut in Erinnerung bleiben und nie werde ich von den daraus entstandenen Albträumen erlöst.)
+- Fragen nach Punkteverteilung
 
 
 DONE:
